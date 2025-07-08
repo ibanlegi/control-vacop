@@ -1,0 +1,332 @@
+[
+  {
+    "id": "01",
+    "name": "Device Address",
+    "data": 2
+  },
+  {
+    "id": "03",
+    "name": "Motor Current Limit",
+    "data": 32
+  },
+  {
+    "id": "09",
+    "name": "PWM Frequency",
+    "data": 20000
+  },
+  {
+    "id": "0F",
+    "name": "Number of Poles",
+    "data": 8
+  },
+  {
+    "id": "10",
+    "name": "Encoder Lines",
+    "data": 1000
+  },
+  {
+    "id": "15",
+    "name": "Motor type",
+    "data": 1
+  },
+  {
+    "id": "26",
+    "name": "UART baud-rate",
+    "data": 0
+  },
+  {
+    "id": "2C",
+    "name": "CANopen baud-rate",
+    "data": 0
+  },
+  {
+    "id": "2E",
+    "name": "Stall Detection",
+    "data": 5000
+  },
+  {
+    "id": "2F",
+    "name": "Heartbeat Producer",
+    "data": 0
+  },
+  {
+    "id": "2D",
+    "name": "Analogue S/T Max Speed",
+    "data": 8000
+  },
+  {
+    "id": "17",
+    "name": "Current Controller Kp",
+    "data": 0.2285537
+  },
+  {
+    "id": "18",
+    "name": "Current Controller Ki",
+    "data": 27.8461532
+  },
+  {
+    "id": "0E",
+    "name": "Motor Inductance",
+    "data": 0.0002365
+  },
+  {
+    "id": "0D",
+    "name": "Motor Resistance",
+    "data": 0.0223693
+  },
+  {
+    "id": "21",
+    "name": "Sensorless Injection Amplitude (ZSFT)",
+    "data": 0.9000015
+  },
+  {
+    "id": "24",
+    "name": "Sensorless Injection Frequency ZSFT",
+    "data": 6553600
+  },
+  {
+    "id": "22",
+    "name": "Sensorless Initial Position Detection Amplitude (ZSFT)",
+    "data": 0.9899978
+  },
+  {
+    "id": "25",
+    "name": "Sensorless Transition Speed",
+    "data": 1310720
+  },
+  {
+    "id": "23",
+    "name": "DC Motor Observer Gain",
+    "data": 50
+  },
+  {
+    "id": "28",
+    "name": "Encoder/Hall C.C.W Offset",
+    "data": 0.601181
+  },
+  {
+    "id": "29",
+    "name": "Encoder/Hall C.W Offset",
+    "data": 0.601181
+  },
+  {
+    "id": "02",
+    "name": "Command Mode",
+    "data": 1
+  },
+  {
+    "id": "13",
+    "name": "Feedback Control Mode",
+    "data": 2
+  },
+  {
+    "id": "16",
+    "name": "Control type",
+    "data": 1
+  },
+  {
+    "id": "0C",
+    "name": "Motor Direction",
+    "data": 0
+  },
+  {
+    "id": "0A",
+    "name": "Speed Controller Kp",
+    "data": 0
+  },
+  {
+    "id": "0B",
+    "name": "Speed Controller Ki",
+    "data": 0
+  },
+  {
+    "id": "1C",
+    "name": "Position Controller Kp",
+    "data": 0
+  },
+  {
+    "id": "1D",
+    "name": "Position Controller Ki",
+    "data": 0
+  },
+  {
+    "id": "04",
+    "name": "Torque Reference_Iq",
+    "data": 0
+  },
+  {
+    "id": "05",
+    "name": "Speed Reference",
+    "data": 0
+  },
+  {
+    "id": "11",
+    "name": "Speed Limit",
+    "data": 30000
+  },
+  {
+    "id": "1B",
+    "name": "Desired Position",
+    "data": -2251
+  },
+  {
+    "id": "1A",
+    "name": "Magnetizing Current_Id",
+    "data": 0
+  },
+  {
+    "id": "06",
+    "name": "Power Reference",
+    "data": 0
+  },
+  {
+    "id": "2A",
+    "name": "Speed Acceleration",
+    "data": 0
+  },
+  {
+    "id": "2B",
+    "name": "Speed Deceleration",
+    "data": 0
+  },
+  {
+    "id": "A1",
+    "name": "Error Register",
+    "data": "0B00000000"
+  },
+  {
+    "id": "A2",
+    "name": "Firmware Version",
+    "data": "0005B010"
+  },
+  {
+    "id": "8D",
+    "name": "Torque_Iq ",
+    "data": -1.1317062
+  },
+  {
+    "id": "8E",
+    "name": "Magnetizing Current_Id",
+    "data": -0.1951217
+  },
+  {
+    "id": "A0",
+    "name": "Position ",
+    "data": -11635
+  },
+  {
+    "id": "A3",
+    "name": "Hardware Version",
+    "data": "B0102000"
+  },
+  {
+    "id": "B8",
+    "name": "Encoder Index counts",
+    "data": 0
+  },
+  {
+    "id": "B0",
+    "name": "Angle [P.U.]",
+    "data": 0.6845169
+  },
+  {
+    "id": "82",
+    "name": "VA [V]",
+    "data": 0
+  },
+  {
+    "id": "83",
+    "name": "VB [V]",
+    "data": 0
+  },
+  {
+    "id": "84",
+    "name": "IA [A]",
+    "data": 0
+  },
+  {
+    "id": "85",
+    "name": "IB [A]",
+    "data": 0
+  },
+  {
+    "id": "87",
+    "name": "IM_DC motor [A]",
+    "data": 0
+  },
+  {
+    "id": "88",
+    "name": "VM_DC motor [V]",
+    "data": 0
+  },
+  {
+    "id": "30",
+    "name": "MotionProfileMode",
+    "data": 0
+  },
+  {
+    "id": "31",
+    "name": "Motion Profile Variable 1",
+    "data": 0
+  },
+  {
+    "id": "32",
+    "name": "Motion Profile Variable 2",
+    "data": 0
+  },
+  {
+    "id": "33",
+    "name": "Motion Profile Variable 3",
+    "data": 0
+  },
+  {
+    "id": "34",
+    "name": "Motion Profile Variable 4",
+    "data": 0
+  },
+  {
+    "id": "35",
+    "name": "Motion Profile Variable 5",
+    "data": 0
+  },
+  {
+    "id": "note",
+    "name": "note",
+    "data": "Save - 08/07/2025 - 10:30"
+  },
+  {
+    "id": "38",
+    "name": "GPO 0",
+    "data": 0
+  },
+  {
+    "id": "C5",
+    "name": "GPI 0",
+    "data": 1
+  },
+  {
+    "id": "39",
+    "name": "Regeneration Current Limit",
+    "data": -10376.5333404
+  },
+  {
+    "id": "3A",
+    "name": "Encoder Input Digital Filter level",
+    "data": 2934894318
+  },
+  {
+    "id": "3A-1",
+    "name": "Hall Input Digital Filter level",
+    "data": 2934894318
+  },
+  {
+    "id": "1E",
+    "name": "HSO Sesorless Filter Cutt-off",
+    "data": 0
+  },
+  {
+    "id": "36",
+    "name": "Analogue S/T Offset Precentage",
+    "data": -10376.5333404
+  }
+]
