@@ -35,6 +35,10 @@ class Vacop:
     def stop_motor(self):
         self.m1.stop_motor()
         self.m2.stop_motor()
+    
+    def __del__(self):
+        self._print("Destruct vacop object")
+        self.stop_motor()
 
 
 
@@ -60,12 +64,4 @@ if __name__ == "__main__":
 
     myVacop.set_torque(5)
     time.sleep(10)
-
-    myVacop.stop_motor()
-
-
-
-
-
-
     
