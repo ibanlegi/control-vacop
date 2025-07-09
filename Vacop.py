@@ -6,23 +6,27 @@ class Vacop:
         self.verbose = verbose
         self.m1 = MotorController(node=1, stoPin=16, verbose=self.verbose)
         self.m2 = MotorController(node=2, stoPin=26, verbose=self.verbose)
+
+    def _print(self, *args, **kwargs):
+        if self.verbose:
+            print(*args, **kwargs)
         
     def configure(self):
         self.m1.configure()
         self.m2.configure()
 
     def set_forward(self):
-        print("Set forward")
+        self._print("Set forward")
         self.m1.set_direction("CW")
         self.m2.set_direction("CCW")
 
     def set_reverse(self):
-        print("Set forward")
+        self._print("Set forward")
         self.m1.set_direction("CCW")
         self.m2.set_direction("CW")
 
     def set_torque(self, torque_value):
-        print("Set torque : ", torque_value)
+        self._print("Set torque : ", torque_value)
         # A vérifier s'il ne faut pas inverser une valeur
         self.m1.set_torque(torque_value)
         self.m2.set_torque(torque_value)
