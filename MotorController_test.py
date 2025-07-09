@@ -89,25 +89,6 @@ class MotorController:
         print(BLUE + "Current controller KP: 0.5 | Error: None" + RESET)
         print(BLUE + "Current controller KI: 0.1 | Error: None" + RESET)
 
-
-def interactive_mode(controller: MotorController):
-    while True:
-        try:
-            action = input("Choose an action : \n\t[D] - Set direction \n\t[T] - Set torque\n> ").upper()
-            if action == 'D':
-                controller.display_direction()
-                direction = input("Enter direction [CW | CCW]: ").upper()
-                controller.set_direction(direction)
-            elif action == 'T':
-                torque = input("Enter torque value (positive float): ")
-                controller.set_torque(torque)
-            else:
-                print("Unknown action.")
-        except Exception as e:
-            print(BLUE + f"Error: {e}")
-        print()
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Motor control with direction and torque")
     parser.add_argument('node', type=int, help='Node identifier (required)')
@@ -139,7 +120,21 @@ if __name__ == "__main__":
 
         else:
             print("\nNo direction or torque provided, entering interactive mode.\n")
-            interactive_mode(controller)
+            while True:
+                try:
+                    action = input("Choose an action : \n\t[D] - Set direction \n\t[T] - Set torque\n> ").upper()
+                    if action == 'D':
+                        controller.display_direction()
+                        direction = input("Enter direction [CW | CCW]: ").upper()
+                        controller.set_direction(direction)
+                    elif action == 'T':
+                        torque = input("Enter torque value (positive float): ")
+                        controller.set_torque(torque)
+                    else:
+                        print("Unknown action.")
+                except Exception as e:
+                    print(BLUE + f"Error: {e}")
+                print()
 
     except KeyboardInterrupt:
         print("\nKeyboard interrupt received, exiting...")
