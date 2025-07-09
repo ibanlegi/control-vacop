@@ -19,9 +19,10 @@ class MotorController:
     
     def _print(self, *args, **kwargs):
         if self.verbose:
-            print(*args, **kwargs)
+            print("|",self.node,"|",*args, **kwargs)
 
     def _initialize_STO(self):
+        self._print("Init STO  with ",self.stoPin)
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.stoPin, GPIO.OUT)
         GPIO.output(self.stoPin, GPIO.HIGH)
@@ -52,12 +53,14 @@ class MotorController:
         self._print("End Calibration")
 
     def stop_motor(self):
-        self._stop_STO()
         self._stop_torque()
+        self._stop_STO()
 
     def _stop_STO(self):
+        self._print("putting sto to low")
         GPIO.output(self.stoPin, GPIO.LOW)
-        GPIO.cleanup()
+        self._print("output LOW")
+        #GPIO.cleanup()
         self._print("[STO] signal set to LOW: Safe Torque Off activated")
     
     def _stop_torque(self):
@@ -86,7 +89,7 @@ class MotorController:
         if direction_str not in directions:
             raise ValueError(f"ERROR: '{direction_str}' is not valid (CW, CCW)")
         self.mySolo.set_motor_direction(directions[direction_str])
-        time.sleep(1)
+        #time.sleep(1)
         if self.verbose : self.display_direction()
 
     def set_torque(self, torque_value):
@@ -98,7 +101,7 @@ class MotorController:
             raise ValueError("ERROR: torque must be non-negative")
 
         self.mySolo.set_torque_reference_iq(torque_value)
-        time.sleep(2)
+        #time.sleep(2)
         if self.verbose : self.display_torque()
 
     def display_configuration(self):

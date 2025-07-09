@@ -49,19 +49,18 @@ if __name__ == "__main__":
 
     myVacop = Vacop(verbose = args.verbose)
 
+    myVacop.configure()
+    time.sleep(5)
     myVacop.set_forward()
 
-    myVacop.set_torque(10)
+    myVacop.set_torque(8)
     time.sleep(5)
 
-    myVacop.set_torque(5)
-    time.sleep(10)
+    myVacop.set_torque(0)
+
+    time.sleep(1)
 
     myVacop.set_reverse()
 
-    myVacop.set_torque(10)
+    myVacop.set_torque(8)
     time.sleep(5)
-
-    myVacop.set_torque(5)
-    time.sleep(10)
-    
