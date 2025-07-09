@@ -19,9 +19,10 @@ class MotorController:
 
     def _print(self, *args, **kwargs):
         if self.verbose:
-            print(*args, **kwargs)
+            print("[",self.node,"]",*args, **kwargs)
 
     def _initialize_STO(self):
+        self._print("Init STO  with ",self.stoPin)
         print(BLUE + f"[Simulated GPIO] Initializing STO pin {self.stoPin} (set to HIGH)" + RESET)
 
     def _initialize_motor(self):
@@ -32,18 +33,18 @@ class MotorController:
 
     def configure(self):
         print(BLUE + "[Simulated SOLO] Configuring motor..." + RESET)
-        time.sleep(1)
         self._print("Identifying the Motor")
         time.sleep(5)
         self._print("End Configuration")
+
         print(BLUE + "[Simulated SOLO] Hall Sensor calibration..." + RESET)
         self._print("Hall Sensor calibration")
         time.sleep(10)
         self._print("End Calibration")
 
     def stop_motor(self):
-        self._stop_STO()
         self._stop_torque()
+        self._stop_STO()
 
     def _stop_STO(self):
         print(BLUE + "[Simulated GPIO]" + RESET)
@@ -66,20 +67,18 @@ class MotorController:
     def set_direction(self, direction_str):
         direction_str = direction_str.upper()
         if direction_str not in ["CW", "CCW"]:
-            raise ValueError(f"ERROR: '{direction_str}' is not valid (CW, CCW)")
+            raise ValueError(f"[{self.node}]ERROR: '{direction_str}' is not valid (CW, CCW)")
         print(BLUE + f"[Simulated SOLO] Motor direction set to {direction_str}" + RESET)
-        time.sleep(1)
         if self.verbose: self.display_direction()
 
     def set_torque(self, torque_value):
         try:
             torque_value = float(torque_value)
         except ValueError:
-            raise ValueError(f"ERROR: '{torque_value}' is not a valid float")
+            raise ValueError(f"[{self.node}]ERROR: '{torque_value}' is not a valid float")
         if torque_value < 0:
-            raise ValueError("ERROR: torque must be non-negative")
+            raise ValueError(f"[{self.node}]ERROR: torque must be non-negative")
         print(BLUE + f"[Simulated SOLO] Torque set to {torque_value} A" + RESET)
-        time.sleep(2)
         if self.verbose: self.display_torque()
 
     def display_configuration(self):
