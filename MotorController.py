@@ -7,9 +7,9 @@ import time
 class MotorController:
     def __init__(self, node, stoPin, verbose = False):
         if not isinstance(node, int):
-            raise TypeError(f"ERROR: node ({node}) is not type int")
+            raise TypeError(f"[{self.node}]ERROR: node ({node}) is not type int")
         if not isinstance(stoPin, int):
-            raise TypeError(f"ERROR: stoPin ({stoPin}) is not type int")
+            raise TypeError(f"[{self.node}]ERROR: stoPin ({stoPin}) is not type int")
         self.node = node
         self.stoPin = stoPin
         self.mySolo = None
@@ -19,7 +19,7 @@ class MotorController:
     
     def _print(self, *args, **kwargs):
         if self.verbose:
-            print("|",self.node,"|",*args, **kwargs)
+            print("[",self.node,"]",*args, **kwargs)
 
     def _initialize_STO(self):
         self._print("Init STO  with ",self.stoPin)
@@ -70,15 +70,15 @@ class MotorController:
 
     def display_torque(self):
         torque, error = self.mySolo.get_quadrature_current_iq_feedback()
-        print(f"Measured Iq/Torque [A]: {torque} | Error: {error}")
+        print(f"[{self.node}]Measured Iq/Torque [A]: {torque} | Error: {error}")
 
     def display_speed(self):
         speed, error = self.mySolo.get_speed_feedback()
-        print(f"Motor Speed [RPM]: {speed} | Error: {error}")
+        print(f"[{self.node}]Motor Speed [RPM]: {speed} | Error: {error}")
 
     def display_direction(self):
         direction, error = self.mySolo.get_motor_direction()
-        print(f"Set direction: {direction} | Error: {error}")
+        print(f"[{self.node}]Set direction: {direction} | Error: {error}")
 
     def set_direction(self, direction_str):
         directions = {
@@ -87,7 +87,7 @@ class MotorController:
         }
         direction_str = direction_str.upper()
         if direction_str not in directions:
-            raise ValueError(f"ERROR: '{direction_str}' is not valid (CW, CCW)")
+            raise ValueError(f"[{self.node}]ERROR: '{direction_str}' is not valid (CW, CCW)")
         self.mySolo.set_motor_direction(directions[direction_str])
         #time.sleep(1)
         if self.verbose : self.display_direction()
@@ -96,30 +96,30 @@ class MotorController:
         try:
             torque_value = float(torque_value)
         except ValueError:
-            raise ValueError(f"ERROR: '{torque_value}' is not a valid float")
+            raise ValueError(f"[{self.node}]ERROR: '{torque_value}' is not a valid float")
         if torque_value < 0:
-            raise ValueError("ERROR: torque must be non-negative")
+            raise ValueError(f"[{self.node}]ERROR: torque must be non-negative")
 
         self.mySolo.set_torque_reference_iq(torque_value)
         #time.sleep(2)
         if self.verbose : self.display_torque()
 
     def display_configuration(self):
-        print("Initial Configuration of the Device and Motor \n")
+        print(f"[{self.node}]Initial Configuration of the Device and Motor \n")
 
         pwm_read, error = self.mySolo.get_output_pwm_frequency_khz()
-        print(f"PWM frequency: {pwm_read} kHz | Error: {error}")
+        print(f"[{self.node}]PWM frequency: {pwm_read} kHz | Error: {error}")
 
         current_limit_read = self.mySolo.get_current_limit()
-        print(f"Current limit: {current_limit_read} A | Error: {error}")
+        print(f"[{self.node}]Current limit: {current_limit_read} A | Error: {error}")
 
         pole_count_read = self.mySolo.get_motor_poles_counts()
-        print(f"Motor poles counts: {pole_count_read} | Error: {error}")
+        print(f"[{self.node}]Motor poles counts: {pole_count_read} | Error: {error}")
 
         kp_read = self.mySolo.get_current_controller_kp()
         ki_read = self.mySolo.get_current_controller_ki()
-        print(f"Current controller KP: {kp_read} | Error: {error}")
-        print(f"Current controller KI: {ki_read} | Error: {error}")
+        print(f"[{self.node}]Current controller KP: {kp_read} | Error: {error}")
+        print(f"[{self.node}]Current controller KI: {ki_read} | Error: {error}")
 
 
 
