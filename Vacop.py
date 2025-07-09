@@ -1,5 +1,6 @@
+import argparse
 import time
-from MotorController import MotorController
+from MotorController_test import MotorController
 
 class Vacop:
     def __init__(self, verbose=False):
@@ -38,7 +39,11 @@ class Vacop:
 
 
 if __name__ == "__main__":
-    myVacop = Vacop(verbose = False)
+    parser = argparse.ArgumentParser(description="Vacop system")
+    parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
+    args = parser.parse_args()
+
+    myVacop = Vacop(verbose = args.verbose)
 
     myVacop.set_forward()
 
@@ -55,6 +60,8 @@ if __name__ == "__main__":
 
     myVacop.set_torque(5)
     time.sleep(10)
+
+    myVacop.stop_motor()
 
 
 
