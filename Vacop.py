@@ -28,7 +28,6 @@ class Vacop:
 
     def set_torque(self, torque_value):
         self._print("Set torque : ", torque_value)
-        # A vérifier s'il ne faut pas inverser une valeur
         self.m1.set_torque(torque_value)
         self.m2.set_torque(torque_value)
 
