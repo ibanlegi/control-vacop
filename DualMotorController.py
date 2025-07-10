@@ -49,7 +49,6 @@ if __name__ == "__main__":
     myMotorController = DualMotorController(verbose = args.verbose)
 
     #myMotorController.configure()
-    #time.sleep(5)
     myMotorController.set_forward()
 
     myMotorController.set_torque(8)
@@ -57,7 +56,7 @@ if __name__ == "__main__":
 
     myMotorController.set_torque(0)
 
-    time.sleep(1)
+    time.sleep(10)
 
     myMotorController.set_reverse()
 
