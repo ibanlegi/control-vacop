@@ -1,4 +1,4 @@
-from Vacop import Vacop
+from DualMotorController import DualMotorController
 import can
 import re
 import time
@@ -8,7 +8,7 @@ MAX_TORQUE = 20  # Maximum torque value for the motors
 
 class OBU:
     def __init__(self, verbose=True):
-        self.vacop = Vacop(verbose=verbose)
+        self.motors = DualMotorController(verbose=verbose)
         self.listener = CanManager()
         self.notifier = can.Notifier(self.bus, [self.listener])
         self.prop_override = 0
@@ -26,8 +26,8 @@ class OBU:
                 if can_msg is not None: 
                     data = can_msg[2]
                     new_torque = int((data * MAX_TORQUE) / 1023)
-                    if new_torque != self.vacop.m1.get_torque():
-                        self.vacop.set_torque(new_torque)
+                    if new_torque != self.motors.m1.get_torque():
+                        self.motors.set_torque(new_torque)
                         print("New torque set:", new_torque)
         except KeyboardInterrupt:
             print("Arrêt manuel détecté.")
@@ -36,7 +36,7 @@ class OBU:
 
     def ending(self):
         print("Nettoyage...")
-        self.vacop.stop_motor()
+        self.motors.stop_motor()
 
 if __name__ == "__main__":
     obu = OBU(verbose=True)

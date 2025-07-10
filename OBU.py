@@ -1,7 +1,7 @@
 import can
 import re
 import time
-from Vacop import Vacop
+from DualMotorController import DualMotorController
 
 #Set the DEVICE as On Board Unit (OBU). It will be used to sort incoming can messages destined to this DEVICE
 DEVICE = "OBU"
@@ -137,13 +137,13 @@ bus = can.interface.Bus(channel='can0', interface='socketcan', receive_own_messa
 def main():
     try:
         with can.interface.Bus(channel='can0', interface='socketcan', receive_own_messages=False) as bus:
-            vacop = Vacop(verbose=True)
+            motors = DualMotorController(verbose=True)
             # Start CAN bus
             message_listener = CanReceive()
             can.Notifier(bus, [message_listener])
 
             while True:
-                # Initialize VACOP
+                # Initialize motors
                 #init(message_listener)
 
                 can_send("BRAKE", "start", 0)
@@ -158,8 +158,8 @@ def main():
                         data = can_msg[2]
                         new_torque = int((data*MAX_TORQUE)/1023)
                         # I reckon the torque is the same in the two motors | we only test one value
-                        if (new_torque != vacop.m1.get_torque() ):
-                            vacop.set_torque(new_torque)
+                        if (new_torque != motors.m1.get_torque() ):
+                            motors.set_torque(new_torque)
                             print("New torque set: ", new_torque)
             
 
@@ -168,8 +168,8 @@ def main():
         print("Exiting...")
 
     finally:
-        vacop.stop_motor()
-        del vacop
+        motors.stop_motor()
+        del motors
 
 if __name__ == "__main__":
     main()
