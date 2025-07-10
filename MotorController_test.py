@@ -123,15 +123,16 @@ if __name__ == "__main__":
             while True:
                 try:
                     action = input("Choose an action : \n\t[D] - Set direction \n\t[T] - Set torque\n> ").upper()
-                    if action == 'D':
-                        controller.display_direction()
-                        direction = input("Enter direction [CW | CCW]: ").upper()
-                        controller.set_direction(direction)
-                    elif action == 'T':
-                        torque = input("Enter torque value (positive float): ")
-                        controller.set_torque(torque)
-                    else:
-                        print("Unknown action.")
+                    match action:
+                        case 'D':
+                            controller.display_direction()
+                            direction = input("Enter direction [CW | CCW]: ").upper()
+                            controller.set_direction(direction)
+                        case 'T':
+                            torque = input("Enter torque value (positive float): ")
+                            controller.set_torque(torque)
+                        case _:
+                            print("Unknown action.")
                 except Exception as e:
                     print(BLUE + f"Error: {e}")
                 print()
