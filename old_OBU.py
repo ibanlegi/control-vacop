@@ -132,7 +132,7 @@ class CanReceive(can.Listener):
 #################################### MAIN ###################################################
 
 # Load CAN list mappings
-device_id_map, order_id_map, device_id_reverse_map, order_id_reverse_map = load_can_list('CAN_List.txt')
+device_id_map, order_id_map, device_id_reverse_map, order_id_reverse_map = load_can_list('./CAN_system/Can_List.txt')
 
 bus = can.interface.Bus(channel='can0', interface='socketcan', receive_own_messages=False)
 
