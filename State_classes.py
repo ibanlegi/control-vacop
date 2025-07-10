@@ -1,7 +1,7 @@
-#from OBU import OBU
+from OBU import OBU
 
 class I_State:
-    #OBU = OBU()
+    OBU = OBU()
 
     def initialize_system(self): pass
     def stop_pressed(self): pass
