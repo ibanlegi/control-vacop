@@ -16,6 +16,9 @@ class MotorController:
         self.verbose = verbose
         self._initialize_STO()
         self._initialize_motor()
+    
+    def __del__(self):
+        self.stop_motor()
 
     def _print(self, *args, **kwargs):
         if self.verbose:
