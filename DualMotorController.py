@@ -1,6 +1,6 @@
 import argparse
 import time
-from MotorController import MotorController
+from MotorController_test import MotorController
 
 class DualMotorController:
     def __init__(self, verbose=False):
@@ -48,8 +48,8 @@ if __name__ == "__main__":
 
     myMotorController = DualMotorController(verbose = args.verbose)
 
-    myMotorController.configure()
-    time.sleep(5)
+    #myMotorController.configure()
+    #time.sleep(5)
     myMotorController.set_forward()
 
     myMotorController.set_torque(8)

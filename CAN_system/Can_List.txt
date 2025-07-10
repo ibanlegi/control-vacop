@@ -1,0 +1,36 @@
+DeviceID:
+{
+OBU = 00
+BRAKE = 01
+STEER = 02
+}
+
+OrderID:
+{
+stop = 01
+start = 02
+
+brake_enable = 10
+steer_enable = 11
+
+brake_rdy = 20
+steer_rdy = 21
+
+prop_override = 30
+driving_mode = 31
+
+brake_set = 40
+brake_pos_set = 41
+brake_pos_real = 42
+
+steer_pos_set = 50
+steer_pos_real = 51
+
+accel_pedal = 60
+
+bouton_on_off = 101
+bouton_auto_manu = 102
+bouton_reverse = 103
+bouton_park = 104
+
+}

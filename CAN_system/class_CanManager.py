@@ -5,7 +5,7 @@ DEVICE = "OBU"  # Define the DEVICE constant for this class
 
 class CanManager:
     def __init__(self, can_list_file,ui=None):
-        self.device_id_map, self.order_id_map, self.device_id_reverse_map, self.order_id_reverse_map = self.load_can_list(can_list_file)
+        self.device_id_map, self.order_id_map, self.device_id_reverse_map, self.order_id_reverse_map = self.load_can_list("Can_List.txt")
         self.bus = can.interface.Bus(channel='can0', interface='socketcan')
         self.device_id_map = {}
         self.device_id_reverse_map = {}

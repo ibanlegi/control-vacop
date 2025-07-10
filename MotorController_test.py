@@ -16,6 +16,9 @@ class MotorController:
         self.verbose = verbose
         self._initialize_STO()
         self._initialize_motor()
+        # Variables for simuling
+        self._torqueTest = 0
+        self._directionTest = "CW"
     
     def __del__(self):
         self.stop_motor()
@@ -55,23 +58,25 @@ class MotorController:
 
     def _stop_torque(self):
         print(BLUE + "[Simulated SOLO] Torque set to zero: motor stopped" + RESET)
+        self._torqueTest = 0.
         self.display_torque()
         self._print("[Motor] torque set to zero: motor stopped")
 
     def display_torque(self):
-        print(BLUE + "[Simulated SOLO] Measured Iq/Torque [A]: 0.0 | Error: None" + RESET)
+        print(BLUE + f"[Simulated SOLO] Measured Iq/Torque [A]: {self._torqueTest} | Error: None" + RESET)
 
     def display_speed(self):
         print(BLUE + "[Simulated SOLO] Motor Speed [RPM]: 0 | Error: None" + RESET)
 
     def display_direction(self):
-        print(BLUE + "[Simulated SOLO] Set direction: CW | Error: None" + RESET)
+        print(BLUE + f"[Simulated SOLO] Set direction: {self._directionTest} | Error: None" + RESET)
 
     def set_direction(self, direction_str):
         direction_str = direction_str.upper()
         if direction_str not in ["CW", "CCW"]:
             raise ValueError(f"[{self.node}]ERROR: '{direction_str}' is not valid (CW, CCW)")
         print(BLUE + f"[Simulated SOLO] Motor direction set to {direction_str}" + RESET)
+        self._directionTest = direction_str
         if self.verbose: self.display_direction()
 
     def set_torque(self, torque_value):
@@ -82,6 +87,7 @@ class MotorController:
         if torque_value < 0:
             raise ValueError(f"[{self.node}]ERROR: torque must be non-negative")
         print(BLUE + f"[Simulated SOLO] Torque set to {torque_value} A" + RESET)
+        self._torqueTest = torque_value
         if self.verbose: self.display_torque()
 
     def display_configuration(self):
