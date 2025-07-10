@@ -2,7 +2,7 @@ import argparse
 import time
 from MotorController import MotorController
 
-class Vacop:
+class DualMotorController:
     def __init__(self, verbose=False):
         self.verbose = verbose
         self.m1 = MotorController(node=1, stoPin=16, verbose=self.verbose)
@@ -28,7 +28,6 @@ class Vacop:
 
     def set_torque(self, torque_value):
         self._print("Set torque : ", torque_value)
-        # A vérifier s'il ne faut pas inverser une valeur
         self.m1.set_torque(torque_value)
         self.m2.set_torque(torque_value)
 
@@ -47,20 +46,20 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
     args = parser.parse_args()
 
-    myVacop = Vacop(verbose = args.verbose)
+    myMotorController = DualMotorController(verbose = args.verbose)
 
-    myVacop.configure()
+    myMotorController.configure()
     time.sleep(5)
-    myVacop.set_forward()
+    myMotorController.set_forward()
 
-    myVacop.set_torque(8)
+    myMotorController.set_torque(8)
     time.sleep(5)
 
-    myVacop.set_torque(0)
+    myMotorController.set_torque(0)
 
     time.sleep(1)
 
-    myVacop.set_reverse()
+    myMotorController.set_reverse()
 
-    myVacop.set_torque(8)
+    myMotorController.set_torque(8)
     time.sleep(5)
