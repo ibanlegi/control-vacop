@@ -17,6 +17,9 @@ class MotorController:
         self._initialize_STO()
         self._initialize_motor()
     
+    def __del__(self):
+        self.stop_motor()
+    
     def _print(self, *args, **kwargs):
         if self.verbose:
             print("[",self.node,"]",*args, **kwargs)
@@ -60,7 +63,6 @@ class MotorController:
         self._print("putting sto to low")
         GPIO.output(self.stoPin, GPIO.LOW)
         self._print("output LOW")
-        #GPIO.cleanup()
         self._print("[STO] signal set to LOW: Safe Torque Off activated")
     
     def _stop_torque(self):
@@ -89,7 +91,6 @@ class MotorController:
         if direction_str not in directions:
             raise ValueError(f"[{self.node}]ERROR: '{direction_str}' is not valid (CW, CCW)")
         self.mySolo.set_motor_direction(directions[direction_str])
-        #time.sleep(1)
         if self.verbose : self.display_direction()
 
     def set_torque(self, torque_value):
@@ -101,7 +102,6 @@ class MotorController:
             raise ValueError(f"[{self.node}]ERROR: torque must be non-negative")
 
         self.mySolo.set_torque_reference_iq(torque_value)
-        #time.sleep(2)
         if self.verbose : self.display_torque()
 
     def display_configuration(self):
@@ -120,26 +120,6 @@ class MotorController:
         ki_read = self.mySolo.get_current_controller_ki()
         print(f"[{self.node}]Current controller KP: {kp_read} | Error: {error}")
         print(f"[{self.node}]Current controller KI: {ki_read} | Error: {error}")
-
-
-
-def interactive_mode(controller : MotorController):
-    while True:
-        try:
-            action = input("Choose an action : \n\t[D] - Set direction \n\t[T] - Set torque\n> ").upper()
-            if action == 'D':
-                controller.display_direction()
-                direction = input("Enter direction [CW | CCW]: ").upper()
-                controller.set_direction(direction)
-            elif action == 'T':
-                torque = input("Enter torque value (positive float): ")
-                controller.set_torque(torque)
-            else:
-                print("Unknown action.")
-        except Exception as e:
-            print(f"Error: {e}")
-        print()
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Motor control with direction and torque")
@@ -172,7 +152,22 @@ if __name__ == "__main__":
 
         else:
             print("\nNo direction or torque provided, entering interactive mode.\n")
-            interactive_mode(controller)
+            while True:
+                try:
+                    action = input("Choose an action : \n\t[D] - Set direction \n\t[T] - Set torque\n> ").upper()
+                    match action:
+                        case 'D':
+                            controller.display_direction()
+                            direction = input("Enter direction [CW | CCW]: ").upper()
+                            controller.set_direction(direction)
+                        case 'T':
+                            torque = input("Enter torque value (positive float): ")
+                            controller.set_torque(torque)
+                        case _:
+                            print("Unknown action.")
+                except Exception as e:
+                    print(f"Error: {e}")
+                print()
 
     except KeyboardInterrupt:
         print("\nKeyboard interrupt received, exiting...")
