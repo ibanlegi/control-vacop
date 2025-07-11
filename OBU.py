@@ -17,7 +17,7 @@ class OBU:
     def __init__(self, verbose=False):
         self.verbose = verbose
 
-        self.bus = can.interface.Bus(channel='vcan0', interface='socketcan', receive_own_messages=False)
+        self.bus = can.interface.Bus(channel='can0', interface='socketcan', receive_own_messages=False)
 
         self.motors = DualMotorController(verbose = self.verbose)
         self.can_manager = CANManager(self.bus)
@@ -38,7 +38,6 @@ class OBU:
             self.running = True
             while self.running:
                 can_msg = self.listener.can_input()
-                print(" CAN lecture")
                 if can_msg is not None: 
                     if can_msg != msg_prec :
                         #print("can_msg = ", can_msg[2])
@@ -47,9 +46,6 @@ class OBU:
                             value = (float(can_msg[2])*MAX_TORQUE/1023)
                             print("Value : ",value )
                             self.motors.set_torque(value)
-                else:
-                    print("No CAN message received ,stoping program")
-                    self.running = False
         except KeyboardInterrupt:
             print("Arrêt manuel détecté.")
         finally:
@@ -58,7 +54,6 @@ class OBU:
     def ending(self):
         print("\t \t Closing up and erasing...")
         self.bus.shutdown()
-        # self.motors.stop_motor()
 
 if __name__ == "__main__":
     obu = OBU(verbose=True)
