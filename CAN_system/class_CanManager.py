@@ -1,102 +1,103 @@
+""" File: class_CanManager.py
+# This file is part of the OBU project.
+# Created by [Rémi Myard]
+# Modified by Iban LEGINYORA and Tinhinane AIT-MESSAOUD
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the MIT License
+"""
+
+
 import can
 import re
 
-DEVICE = "OBU"  # Define the DEVICE constant for this class
-
-class CanManager:
-    def __init__(self):
-        self.device_id_map = {}
-        self.device_id_reverse_map = {}
-        self.order_id_map = {}
-        self.order_id_reverse_map = {}
-        self.last_data = {}
-        self.last_received_message = None
-        self.ui = None  # Ajout si jamais utilisé
-        self.load_can_list("./CAN_system/Can_List.txt")
-
-        try:
-            self.bus = can.interface.Bus(channel='can0', interface='socketcan')
-        except can.CanError as e:
-            print(f"Erreur d'initialisation du bus CAN : {e}")
-            self.bus = None
+class CANManager:
+    def __init__(self,bus, device_name = 'OBU', can_list_path = 'CAN_system/Can_List.txt', ui=None):
+        self.device_name = device_name
+        self.ui = ui
+        self.device_id_map, self.order_id_map, self.device_id_reverse_map, self.order_id_reverse_map = self.load_can_list(can_list_path)
+        self.bus = bus
 
     def load_can_list(self, filename):
-        def parse_section(section_name, target_map, reverse_map):
-            pattern = rf'{section_name}:\s*{{(.*?)}}'
-            match = re.search(pattern, content, re.DOTALL)
-            if not match:
-                print(f"[WARN] Section {section_name} non trouvée.")
-                return
-            lines = match.group(1).strip().split('\n')
-            for line in lines:
-                if '=' in line:
-                    key, value = map(str.strip, line.split('=', 1))
-                    if key and value:
+        device_id_map, order_id_map = {}, {}
+        device_id_reverse_map, order_id_reverse_map = {}, {}
+
+        with open(filename, 'r') as file:
+            content = file.read()
+
+        for section_name, target_map, reverse_map in [
+            ("DeviceID", device_id_map, device_id_reverse_map),
+            ("OrderID", order_id_map, order_id_reverse_map)
+        ]:
+            section = re.search(fr'{section_name}:\s*{{([^}}]*)}}', content)
+            if section:
+                lines = section.group(1).strip().split('\n')
+                for line in lines:
+                    if '=' in line:
+                        key, value = map(str.strip, line.split('='))
                         target_map[key] = value
                         reverse_map[value] = key
-                    else:
-                        print(f"[WARN] Ligne malformée dans {section_name}: '{line}'")
-                elif line.strip():  # ligne non vide
-                    print(f"[WARN] Ligne invalide dans {section_name}: '{line}'")
 
-        try:
-            with open(filename, 'r', encoding='utf-8') as file:
-                content = file.read()
-        except FileNotFoundError:
-            print(f"[ERREUR] Fichier non trouvé: {filename}")
-            return
+        return device_id_map, order_id_map, device_id_reverse_map, order_id_reverse_map
 
-        parse_section('DeviceID', self.device_id_map, self.device_id_reverse_map)
-        parse_section('OrderID', self.order_id_map, self.order_id_reverse_map)
-
-    def can_send(self, device_id, order_id, data=None, ui=None):
+    def can_send(self,device_id, order_id, data=None, ui=None):
+        
+        # Convert human-readable IDs to their corresponding hex values
         device_value = self.device_id_map.get(device_id)
         order_value = self.order_id_map.get(order_id)
 
         if device_value is None or order_value is None:
-            raise ValueError(f"ID invalide: device_id={device_id}, order_id={order_id}")
+            raise ValueError("Invalid device_id or order_id")
 
+        # Create a CAN message with device_value followed by order_value
         arbitration_id = int(device_value + order_value, 16)
 
-        # Convert data to bytes
+        # Convert the data into a list of bytes
         data_bytes = []
         if data is not None:
-            if not isinstance(data, int):
-                raise TypeError("`data` doit être un entier")
-            data_bytes = data.to_bytes((data.bit_length() + 7) // 8 or 1, 'big')
+            while data > 0:
+                data_bytes.insert(0, data & 0xFF)
+                data >>= 8
+            # Convert data back in decimal to display
+            data = int.from_bytes(data_bytes, byteorder='big')
 
-        if self.bus:
-            try:
-                can_message = can.Message(arbitration_id=arbitration_id, data=data_bytes, is_extended_id=False)
-                self.bus.send(can_message)
-                message = f"sent: {device_id} {order_id} {int.from_bytes(data_bytes, 'big')}"
-                if ui:
-                    ui.log_to_terminal(message)
-            except can.CanError as e:
-                print(f"[ERREUR] Échec d'envoi CAN: {e}")
-        else:
-            print("[ERREUR] Bus CAN non initialisé.")
+        # Create the CAN message
+        can_message = can.Message(arbitration_id=arbitration_id, data=data_bytes, is_extended_id=False)
+        
+        # Convert data back in decimal to display
+        data = int.from_bytes(data_bytes, byteorder='big')
 
-    def can_receive(self):
+        # Send the message on the CAN bus
+        self.bus.send(can_message)
+
+        
+
+
+class CANReceiver(can.Listener):
+    def __init__(self, manager: CANManager):
+        super().__init__()
+        self.manager = manager
+        self.last_received_message = None
+        self.last_data = {}
+
+    def on_message_received(self, msg):
+        self.last_received_message = msg
+
+    def can_input(self):
         if self.last_received_message is None:
             return None
 
         arbitration_id = self.last_received_message.arbitration_id
-        device_value = f"{(arbitration_id >> 8) & 0xFF:02X}"
-        order_value = f"{arbitration_id & 0xFF:02X}"
-
+        device_hex = hex(arbitration_id >> 8)[2:].zfill(2)
+        order_hex = hex(arbitration_id & 0xFF)[2:].zfill(2)
         data = int.from_bytes(self.last_received_message.data, byteorder='big')
 
-        device_id = self.device_id_reverse_map.get(device_value, device_value)
-        order_id = self.order_id_reverse_map.get(order_value, order_value)
+        device = self.manager.device_id_reverse_map.get(device_hex, device_hex)
+        order = self.manager.order_id_reverse_map.get(order_hex, order_hex)
 
-        if device_id == DEVICE:
-            key = (device_id, order_id)
-            if self.last_data.get(key) != data:
-                message = f"received: {device_id} {order_id} {data}"
-                if self.ui:
-                    self.ui.log_to_terminal(message)
+        if device == self.manager.device_name:
+            key = (device, order)
+            if key not in self.last_data or self.last_data[key] != data:
+                if self.manager.ui:
+                    self.manager.ui.log_to_terminal(f"received: {device} {order} {data}")
                 self.last_data[key] = data
-
-            return device_id, order_id, data
-        return None
+            return device, order, data
