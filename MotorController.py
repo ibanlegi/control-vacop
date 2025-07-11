@@ -67,7 +67,7 @@ class MotorController:
     
     def _stop_torque(self):
         self.mySolo.set_torque_reference_iq(0.0)
-        self.display_torque()
+        if self.verbose : self.display_torque()
         self._print("[Motor] torque set to zero: motor stopped")
 
     def display_torque(self):

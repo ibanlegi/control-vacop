@@ -9,7 +9,7 @@ class I_State:
     def direction_button_pressed(self): pass   
     def direction_changed_event(self): pass
     def accelerator_pressed(self): pass
-    def accelerator_released(self): pass
+    def accelerator_released(self, torqueValue): pass
     def brake_pressed(self): pass
     def brake_released(self): pass
 
@@ -17,6 +17,8 @@ class I_State:
 class STARTED(I_State):
     def initialize_system(self):
         print("System initialized")
+        self.OBU.can_manager.can_send("BRAKE", "start", 0)
+        self.OBU.motors.set_forward()
         return STOPPED()
 
 class STOPPED(I_State):
@@ -33,7 +35,7 @@ class STOPPED(I_State):
         return OFF()
 
 class ACCELERATING(I_State):
-    def accelerator_released(self):
+    def accelerator_released(self, torqueValue):
         return ACTIVE()
 
     def brake_pressed(self):

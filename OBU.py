@@ -10,6 +10,7 @@ from DualMotorController import DualMotorController
 import can
 from CAN_system.class_CanManager import CANManager
 from CAN_system.class_CanManager import CANReceiver
+from State_classes import *
 
 MAX_TORQUE = 20  # Maximum torque value for the motors
 
@@ -20,31 +21,28 @@ class OBU:
         self.bus = can.interface.Bus(channel='can0', interface='socketcan', receive_own_messages=False)
 
         self.motors = DualMotorController(verbose = self.verbose)
-        self.can_manager = CANManager(self.bus)
-        self.listener = CANReceiver(self.can_manager)
+        self.canManager = CANManager(self.bus)
+        self.listener = CANReceiver(self.canManager)
         self.notifier = can.Notifier(self.bus, [self.listener])
-        self.prop_override = 0
-        self.manual_prop_set = 0
-        self.last_steer_enable = 0
         self.running = False
+        self.currentState = STARTED()
 
 
-    def run(self):
-        self.motors.set_forward()
-        msg_prec = None
-        try:
-            self.can_manager.can_send("BRAKE", "start", 0)
-            
+    def bus_listen(self):
+        beforeMsg = None
+        try:            
             self.running = True
             while self.running:
-                can_msg = self.listener.can_input()
-                if can_msg is not None: 
-                    if can_msg != msg_prec :
-                        #print("can_msg = ", can_msg[2])
-                        msg_prec = can_msg
-                        if msg_prec != None :
-                            value = (float(can_msg[2])*MAX_TORQUE/1023)
+                currentMsg = self.listener.can_input()
+                if currentMsg is not None: 
+                    if currentMsg != beforeMsg :
+                        beforeMsg = currentMsg
+                        if beforeMsg != None :
+                            data = currentMsg[2]
+                            value = (float(data)*MAX_TORQUE/1023)
                             print("Value : ",value )
+                            if value == 0.0 :
+                                print("PEDALE LACHEE")
                             self.motors.set_torque(value)
         except KeyboardInterrupt:
             print("Arrêt manuel détecté.")
@@ -56,5 +54,5 @@ class OBU:
         self.bus.shutdown()
 
 if __name__ == "__main__":
-    obu = OBU(verbose=True)
-    obu.run()
+    obu = OBU(verbose=False)
+    obu.bus_listen()
