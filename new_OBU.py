@@ -56,17 +56,19 @@ class OBU:
 
     def on_rdy(self, messageType):
         if self.mode == "INITIALIZE" and messageType not in self.tabRdy_rcv: # Voir si on doit réceptionner plusieurs rdy
+            print("I'm in")
             self.tabRdy_rcv.append(messageType)
-            if len(self.tabRdy_rcv) == 1: # A voir s'il en faut plusieurs
+            if len(self.tabRdy_rcv) != 0: # A voir s'il en faut plusieurs
                 self.change_mode("START")
 
     def on_set_torque(self, data):
-        if self.mode not in ["USER", "MANUAL"]:
+        if self.mode not in ["MANUAL", "AUTO"]:
             raise TypeError(f"ERROR: set torque ({data}) is not possible in {self.mode} mode")
         torqueValue = (float(data)*MAX_TORQUE/1023)
         if not isinstance(torqueValue, float):
             raise TypeError(f"ERROR: value ({torqueValue}) is not type float")
         self.motors.set_torque(torqueValue)
+        #self.mode = "AUTO"
 
     def msg_handling(self, messageType, data):
         match messageType: 
@@ -102,7 +104,6 @@ class OBU:
                     
         except KeyboardInterrupt:
             print("Arrêt manuel détecté.")
-            self.on_shutoff()
         finally:
             self.on_ending()
 
