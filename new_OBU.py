@@ -1,81 +1,11 @@
 from DualMotorController import DualMotorController
 import can
 from CAN_system.class_CanManager import CANManager, CANReceiver
+from VehicleController import VehicleController
 
 MAX_TORQUE = 20
 MIN_TORQUE = MAX_TORQUE / 20
 NO_BRAKE = 600
-
-class State:
-    def __init__(self, obu):
-        self.obu = obu
-        # self.valueBrake = 0
-        self.valueAccelerate = 0
-    def handle_message(self, message_type, data): pass
-
-    # def on_init(self):
-    #     pass
-
-    # def on_shutoff(self):
-    #     pass
-
-    # def on_torque(self, value):
-    #     pass
-    def direction(self):
-        pass
-
-class OffState(State):
-    def handle_message(self, message_type, data):
-        if message_type == "stop":
-            # TODO 
-            print("TODO")
-        elif message_type == "init":
-            print("ajouter nouvel état dans Can_list pour l'envoi de 2e rpi à la fin de l'initialisation")
-            self.obu.transition_to(StoppedState(self.obu))
-
-class StoppedState(State):
-    def handle_message(self, message_type, data):
-        if message_type == "stop":
-            self.obu.transition_to(OffState(self.obu))
-        elif message_type == "accel_pedal":
-            value = float(data) * MAX_TORQUE / 1023
-            print("Accelerate Pedal Value:", value)
-            if abs(value) > MIN_TORQUE:
-                self.obu.motors.set_torque(value)
-                self.obu.transition_to(AccelerateState(self.obu))
-            self.old_valueAccelerate = value
-
-
-
-class AccelerateState(State):
-    def handle_message(self, message_type, data):
-        if message_type == "accel_pedal":
-            value = float(data) * MAX_TORQUE / 1023
-            print("Accelerate Pedal Value:", value)
-            if abs(value - self.old_valueAccelerate) > MIN_TORQUE:
-                self.obu.motors.set_torque(value)
-            else:
-                print("PEDALE LACHEE")
-                self.obu.motors.set_torque(0)
-            self.old_valueAccelerate = value
-        elif message_type == "brake_set" and data > NO_BRAKE: # verifier si c'est bien brake_set ou brake_pos ...
-            self.obu.motors.set_torque(0) # modifier la valeur avec une fonction
-            self.obu.transition_to(BrakeState(self.obu))
-
-class BrakeState(State):
-    def handle_message(self, message_type, data):
-        if message_type == "accel_pedal":
-            value = float(data) * MAX_TORQUE / 1023
-            print("Accelerate Pedal Value:", value)
-            if abs(value - self.old_valueAccelerate) > MIN_TORQUE:
-                self.obu.transition_to(AccelerateState(self.obu))
-                self.obu.motors.set_torque(value)
-            else:
-                print("PEDALE LACHEE")
-                self.obu.motors.set_torque(0)
-            self.old_valueAccelerate = value
-        elif message_type == "brake_set" and data > NO_BRAKE: # verifier si c'est bien brake_set ou brake_pos ...
-            self.obu.motors.set_torque(0) # modifier la valeur avec une fonction
 
 class OBU:
     def __init__(self, verbose=False):
@@ -86,36 +16,95 @@ class OBU:
         self.listener = CANReceiver(self.can_manager)
         self.notifier = can.Notifier(self.bus, [self.listener])
         self.running = False
-        self.state = OffState(self)
+        self.vehicleController = VehicleController()
+        self.tabRdy_rcv = []
+        self.mode = None
+        self.state = None
 
-    # def transition_to(self, new_state):
-    #     self.state = new_state
+        self.change_mode("INITIALIZE")
+
+    def change_mode(self, newMode):
+        self.mode = newMode
+        match self.mode:
+            case "INITIALIZE":
+                self.can_manager.can_send("BRAKE", "start", 0)
+                self.bus_listen()
+            case "START":
+                self.change_mode("MANUAL") # Default
+            case "MANUAL":
+                self.change_state("FORWARD") # Default
+            case "AUTO":
+                print("A implémenter")
+            case "ERROR":
+                self.change_mode("INITIALIZE")
+            case "OFF":
+                self.on_ending()
+            case _:
+                print(f"{newMode} does not exist")
+                self.mode = "OFF"
+    
+    def change_state(self, new_state):
+        self.state = new_state
+        match self.state:
+            case "FORWARD":
+                self.motors.set_forward()
+            case "REVERSE":
+                self.motors.set_reverse()
+            case "ERROR":
+                self.state = None
+                self.change_mode("ERROR")
+
+    def on_rdy(self, messageType):
+        if self.mode == "INITIALIZE" and messageType not in self.tabRdy_rcv: # Voir si on doit réceptionner plusieurs rdy
+            self.tabRdy_rcv.append(messageType)
+            if len(self.tabRdy_rcv) == 1: # A voir s'il en faut plusieurs
+                self.change_mode("START")
+
+    def on_set_torque(self, data):
+        if self.mode not in ["USER", "MANUAL"]:
+            raise TypeError(f"ERROR: set torque ({data}) is not possible in {self.mode} mode")
+        torqueValue = (float(data)*MAX_TORQUE/1023)
+        if not isinstance(torqueValue, float):
+            raise TypeError(f"ERROR: value ({torqueValue}) is not type float")
+        self.motors.set_torque(torqueValue)
+
+    def msg_handling(self, messageType, data):
+        match messageType: 
+            case "brake_rdy":
+                self.on_rdy(messageType)
+            case "steer_rdy":
+                self.on_rdy(messageType)
+            case "accel_pedal":
+                self.on_set_torque(data)
+            # TODO : Implémenter autres messages
+            case _ :
+                self.handle_event(self, messageType, data)
+
+    def handle_event(self, messageType, data):
+        print(f"Le type de message [{messageType}, {data}] n'est pas pris en charge dans l'état {self.state}")
+
+    def on_ending(self):
+        print("\t\tClosing up and erasing...")
+        self.bus.shutdown()
 
     def bus_listen(self):
         try:
             self.running = True
-            self.state.on_init()
             beforeMsg = None
             while self.running:
                 currentMsg = self.listener.can_input()
                 if currentMsg is not None and currentMsg != beforeMsg:
                     beforeMsg = currentMsg
-                    message_type = currentMsg[1]
+                    messageType = currentMsg[1]
                     data = currentMsg[2]
-                    print(f"Message Type: {message_type}, Data: {data}")
-                    self.state.handle_message(message_type, data)
-                    if self.state == OffState(self): # and trouver condition d'arrêt
-                        self.ending()
+                    print(f"Message Type: {messageType}, Data: {data}")
+                    self.msg_handling(messageType, data)
+                    
         except KeyboardInterrupt:
             print("Arrêt manuel détecté.")
-            self.state.on_shutoff()
+            self.on_shutoff()
         finally:
-            self.ending()
-
-    def ending(self):
-        print("\t\tClosing up and erasing...")
-        self.bus.shutdown()
+            self.on_ending()
 
 if __name__ == "__main__":
     obu = OBU(verbose=False)
-    obu.bus_listen()

@@ -1,65 +1,69 @@
-from OBU import OBU
-
-class I_State:
-    OBU = OBU()
-
-    def initialize_system(self): pass
-    def stop_pressed(self): pass
-    def clean_exit(self): pass    
-    def direction_button_pressed(self): pass   
-    def direction_changed_event(self): pass
-    def accelerator_pressed(self): pass
-    def accelerator_released(self, torqueValue): pass
-    def brake_pressed(self): pass
-    def brake_released(self): pass
+MAX_TORQUE = 20
+MIN_TORQUE = MAX_TORQUE / 20
+NO_BRAKE = 600
 
 
-class STARTED(I_State):
-    def initialize_system(self):
-        print("System initialized")
-        self.OBU.can_manager.can_send("BRAKE", "start", 0)
-        self.OBU.motors.set_forward()
-        return STOPPED()
+class State:
+    def __init__(self, obu):
+        self.obu = obu
+        # self.valueBrake = 0
+        self.valueAccelerate = 0
 
-class STOPPED(I_State):
-    def direction_button_pressed(self):
-        return REVERSING()
-    
-    def accelerator_pressed(self):
-        return ACCELERATING()
-    
-    def brake_pressed(self):
-        return BRAKING()
-    
-    def stop_pressed(self):
-        return OFF()
+    def on_init(self, data): pass
 
-class ACCELERATING(I_State):
-    def accelerator_released(self, torqueValue):
-        return ACTIVE()
+    # def on_shutoff(self):
+    #     pass
 
-    def brake_pressed(self):
-        return BRAKING()
+    # def on_torque(self, value):
+    #     pass
+    def direction(self):
+        pass
 
-class BRAKING(I_State):
-    def brake_released(self):
-        return  ACTIVE()
+class OffState(State):
+    def on_init(self, data):
+            print("ajouter nouvel état dans Can_list pour l'envoi de 2e rpi à la fin de l'initialisation")
+            return StoppedState()
 
-class ACTIVE(I_State):
-    #def __init__ (self):
-        #if self.OBU.motors == 0:
-        #    return STOPPED
-        
-    def accelerator_pressed(self):
-        return ACCELERATING()
+class StoppedState(State):
+    def handle_message(self, message_type, data):
+        if message_type == "stop":
+            self.obu.transition_to(OffState(self.obu))
+        elif message_type == "accel_pedal":
+            value = float(data) * MAX_TORQUE / 1023
+            print("Accelerate Pedal Value:", value)
+            if abs(value) > MIN_TORQUE:
+                self.obu.motors.set_torque(value)
+                self.obu.transition_to(AccelerateState(self.obu))
+            self.old_valueAccelerate = value
 
-    def brake_pressed(self):
-        return BRAKING()
 
-class REVERSING(I_State):
-    def direction_changed_event(self):
-        return STOPPED()
 
-class OFF(I_State):
-    def clean_exit(self):
-        print("System shut down")
+class AccelerateState(State):
+    def handle_message(self, message_type, data):
+        if message_type == "accel_pedal":
+            value = float(data) * MAX_TORQUE / 1023
+            print("Accelerate Pedal Value:", value)
+            if abs(value - self.old_valueAccelerate) > MIN_TORQUE:
+                self.obu.motors.set_torque(value)
+            else:
+                print("PEDALE LACHEE")
+                self.obu.motors.set_torque(0)
+            self.old_valueAccelerate = value
+        elif message_type == "brake_set" and data > NO_BRAKE: # verifier si c'est bien brake_set ou brake_pos ...
+            self.obu.motors.set_torque(0) # modifier la valeur avec une fonction
+            self.obu.transition_to(BrakeState(self.obu))
+
+class BrakeState(State):
+    def handle_message(self, message_type, data):
+        if message_type == "accel_pedal":
+            value = float(data) * MAX_TORQUE / 1023
+            print("Accelerate Pedal Value:", value)
+            if abs(value - self.old_valueAccelerate) > MIN_TORQUE:
+                self.obu.transition_to(AccelerateState(self.obu))
+                self.obu.motors.set_torque(value)
+            else:
+                print("PEDALE LACHEE")
+                self.obu.motors.set_torque(0)
+            self.old_valueAccelerate = value
+        elif message_type == "brake_set" and data > NO_BRAKE: # verifier si c'est bien brake_set ou brake_pos ...
+            self.obu.motors.set_torque(0) # modifier la valeur avec une fonction

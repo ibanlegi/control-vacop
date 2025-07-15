@@ -1,8 +1,12 @@
+import gc
 from State_classes import *
 
 class VehicleController:
     def __init__(self):
-        self.state = OFF(self)
+        self.state = OffState(self)
+    
+    def on_init(self, data):
+        self.change_state(self.state.on_init(data))
 
     def change_state(self, new_state_class):
         #if hasattr(self.state, "__del__"):
