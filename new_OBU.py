@@ -1,5 +1,6 @@
 from DualMotorController import DualMotorController
 import can
+import time
 from CAN_system.class_CanManager import CANManager, CANReceiver
 from VehicleController import VehicleController
 
@@ -17,19 +18,34 @@ class OBU:
         self.notifier = can.Notifier(self.bus, [self.listener])
         self.running = False
         self.vehicleController = VehicleController()
-        self.tabRdy_rcv = []
         self.mode = None
         self.state = None
 
         self.change_mode("INITIALIZE")
+    
+    def _print(self, *args, **kwargs):
+        if self.verbose:
+            print("[",self.node,"]",*args, **kwargs)
+    
+    def initialize_BRAKE(self):
+        self._print("Trying to Connect To Brake device")
+        while True:
+            time.sleep(1)
+            self.can_manager.can_send("BRAKE", "start", 0)
+            currentMsg = self.listener.can_input()
+            if currentMsg[1] == "brake_rdy":
+                break
+        self._print("Communication Established successfully with Brake device !")
+
 
     def change_mode(self, newMode):
         self.mode = newMode
         match self.mode:
             case "INITIALIZE":
-                self.can_manager.can_send("BRAKE", "start", 0)
-                self.bus_listen()
+                self.initialize_BRAKE()
+                self.change_mode("START")
             case "START":
+                self.bus_listen()
                 self.change_mode("MANUAL") # Default
             case "MANUAL":
                 self.change_state("FORWARD") # Default
@@ -54,12 +70,6 @@ class OBU:
                 self.state = None
                 self.change_mode("ERROR")
 
-    def on_rdy(self, messageType):
-        if self.mode == "INITIALIZE" and messageType not in self.tabRdy_rcv: # Voir si on doit réceptionner plusieurs rdy
-            self.tabRdy_rcv.append(messageType)
-            if len(self.tabRdy_rcv) == 1: # A voir s'il en faut plusieurs
-                self.change_mode("START")
-
     def on_set_torque(self, data):
         if self.mode not in ["USER", "MANUAL"]:
             raise TypeError(f"ERROR: set torque ({data}) is not possible in {self.mode} mode")
@@ -70,10 +80,6 @@ class OBU:
 
     def msg_handling(self, messageType, data):
         match messageType: 
-            case "brake_rdy":
-                self.on_rdy(messageType)
-            case "steer_rdy":
-                self.on_rdy(messageType)
             case "accel_pedal":
                 self.on_set_torque(data)
             # TODO : Implémenter autres messages
@@ -102,7 +108,7 @@ class OBU:
                     
         except KeyboardInterrupt:
             print("Arrêt manuel détecté.")
-            self.on_shutoff()
+            self.on_ending()
         finally:
             self.on_ending()
 
