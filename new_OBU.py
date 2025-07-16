@@ -71,12 +71,13 @@ class OBU:
                 self.change_mode("ERROR")
 
     def on_set_torque(self, data):
-        if self.mode not in ["USER", "MANUAL"]:
+        if self.mode not in ["MANUAL", "AUTO"]:
             raise TypeError(f"ERROR: set torque ({data}) is not possible in {self.mode} mode")
         torqueValue = (float(data)*MAX_TORQUE/1023)
         if not isinstance(torqueValue, float):
             raise TypeError(f"ERROR: value ({torqueValue}) is not type float")
         self.motors.set_torque(torqueValue)
+        #self.mode = "AUTO"
 
     def msg_handling(self, messageType, data):
         match messageType: 
