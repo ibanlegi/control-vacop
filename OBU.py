@@ -1,6 +1,6 @@
 from DualMotorController import DualMotorController
 import can
-from CAN_system.class_CanManager import CANManager, CANReceiver
+from CAN_system.can_system import CANManager, CANReceiver
 from VehicleController import VehicleController
 
 MAX_TORQUE = 20.0
@@ -16,7 +16,6 @@ class OBU:
         self.listener = CANReceiver(self.can_manager)
         self.notifier = can.Notifier(self.bus, [self.listener])
 
-        self.vehicleController = VehicleController()
         self.tabRdy_rcv = set()
         self.running = False
         self.mode = None

@@ -18,7 +18,11 @@ class MotorController:
         self._initialize_motor()
     
     def __del__(self):
-        self.stop_motor()
+        try:
+            if hasattr(self, 'mySolo') and self.mySolo:
+                self.stop_motor()
+        except Exception as e:
+            print(f"Erreur dans __del__ : {e}")
     
     def _print(self, *args, **kwargs):
         if self.verbose:

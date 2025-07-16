@@ -37,17 +37,24 @@ class DualMotorController:
         self.m2.stop_motor()
     
     def __del__(self):
-        self._print("Destruct vacop object")
-        self.stop_motor()
+        try:
+            self._print("Destruct DualMotorController object")
+            if hasattr(self, 'm1') and self.m1:
+                self.m1.stop_motor()
+            if hasattr(self, 'm2') and self.m2:
+                self.m2.stop_motor()
+        except Exception as e:
+            print(f"Error in DualMotorController.__del__: {e}")
 
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Vacop system")
+    parser = argparse.ArgumentParser(description="DualMotorController system")
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
     args = parser.parse_args()
 
     myMotorController = DualMotorController(verbose = args.verbose)
+
 
     myMotorController.configure()
     myMotorController.set_forward()
