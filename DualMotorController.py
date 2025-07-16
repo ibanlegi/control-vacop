@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     myMotorController = DualMotorController(verbose = args.verbose)
 
-    #myMotorController.configure()
+    myMotorController.configure()
     myMotorController.set_forward()
 
     myMotorController.set_torque(8)

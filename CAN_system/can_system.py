@@ -101,3 +101,39 @@ class CANReceiver(can.Listener):
                     self.manager.ui.log_to_terminal(f"received: {device} {order} {data}")
                 self.last_data[key] = data
             return device, order, data
+
+class CANSystem:
+    def __init__(self, channel='can0', interface='socketcan', verbose=False):
+        self.verbose = verbose
+        self.bus = can.interface.Bus(channel=channel, interface=interface, receive_own_messages=False)
+        self.can_manager = CANManager(self.bus)
+        self.listener = CANReceiver(self.can_manager)
+        self.notifier = can.Notifier(self.bus, [self.listener])
+        self.running = False
+        self.callback = None  # callback to process messages
+
+    def set_callback(self, callback_fn):
+        #Sets the function to call when a message is received.
+        self.callback = callback_fn
+
+    def start_listening(self):
+        # Starts listening to the CAN bus and dispatching messages to the callback.
+        if self.verbose: print("CANSystem: Listening on CAN bus...")
+        self.running = True
+        previous_msg = None
+
+        while self.running:
+            msg = self.listener.can_input()
+            if msg and msg != previous_msg:
+                previous_msg = msg
+                if self.callback:
+                    self.callback(*msg)
+
+    def stop(self):
+        #Stops listening and shuts down the CAN bus.
+        self.running = False
+        self.bus.shutdown()
+
+    def send(self, id_, sub_id, data):
+        #Wrapper around CANManager send.
+        self.can_manager.can_send(id_, sub_id, data)

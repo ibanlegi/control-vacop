@@ -1,49 +1,44 @@
+from CAN_system.can_system import CANSystem
 from DualMotorController import DualMotorController
-import can
-from CAN_system.class_CanManager import CANManager, CANReceiver
 from VehicleController import VehicleController
 
-MAX_TORQUE = 20
-MIN_TORQUE = MAX_TORQUE / 20
-NO_BRAKE = 600
+MAX_TORQUE = 20.0
+TORQUE_SCALE = MAX_TORQUE / 1023.0
 
 class OBU:
     def __init__(self, verbose=False):
         self.verbose = verbose
-        self.bus = can.interface.Bus(channel='can0', interface='socketcan', receive_own_messages=False)
         self.motors = DualMotorController(verbose=self.verbose)
-        self.can_manager = CANManager(self.bus)
-        self.listener = CANReceiver(self.can_manager)
-        self.notifier = can.Notifier(self.bus, [self.listener])
-        self.running = False
-        self.vehicleController = VehicleController()
-        self.tabRdy_rcv = []
+        self.can_system = CANSystem(verbose=self.verbose)
+        self.can_system.set_callback(self.on_can_message)
+        self.vehicle_controller = VehicleController()
+
+        self.tabRdy_rcv = set()
         self.mode = None
         self.state = None
 
         self.change_mode("INITIALIZE")
 
-    def change_mode(self, newMode):
-        self.mode = newMode
+    def change_mode(self, new_mode):
+        self.mode = new_mode
         match self.mode:
             case "INITIALIZE":
-                self.can_manager.can_send("BRAKE", "start", 0)
-                print("i'm in init mode")
-                self.bus_listen()
+                self.can_system.send("BRAKE", "start", 0)
+                self.can_system.start_listening()
             case "START":
-                self.change_mode("MANUAL") # Default
+                self.change_mode("MANUAL")
             case "MANUAL":
-                self.change_state("FORWARD") # Default
+                self.change_state("FORWARD")
             case "AUTO":
-                print("A implémenter")
+                print("AUTO mode not implemented.")
             case "ERROR":
                 self.change_mode("INITIALIZE")
             case "OFF":
                 self.on_ending()
             case _:
-                print(f"{newMode} does not exist")
-                self.mode = "OFF"
-    
+                print(f"Unknown mode '{self.mode}'")
+                self.change_mode("OFF")
+
     def change_state(self, new_state):
         self.state = new_state
         match self.state:
@@ -52,66 +47,41 @@ class OBU:
             case "REVERSE":
                 self.motors.set_reverse()
             case "ERROR":
-                self.state = None
                 self.change_mode("ERROR")
 
-    def on_rdy(self, messageType):
-        if self.mode == "INITIALIZE" and messageType not in self.tabRdy_rcv: # Voir si on doit réceptionner plusieurs rdy
-            print("I'm in")
-            self.tabRdy_rcv.append(messageType)
-            if len(self.tabRdy_rcv) != 0: # A voir s'il en faut plusieurs
-                print("let's start")
+    def on_can_message(self, _, message_type, data):
+        match message_type:
+            case "brake_rdy" | "steer_rdy":
+                self.on_rdy(message_type)
+            case "accel_pedal":
+                self.on_set_torque(data)
+            case "brake_enable":
+                self.on_ending()
+            case _:
+                self.handle_event(message_type, data)
+
+    def on_rdy(self, msg_type):
+        if self.mode == "INITIALIZE" and msg_type not in self.tabRdy_rcv:
+            self.tabRdy_rcv.add(msg_type)
+            if len(self.tabRdy_rcv) > 0:
                 self.change_mode("START")
 
     def on_set_torque(self, data):
-        if self.mode not in ["MANUAL", "AUTO"]:
-            print(f"ERROR: set torque ({data}) is not possible in {self.mode} mode")
-        else:
-            torqueValue = (float(data)*MAX_TORQUE/1023)
-            if not isinstance(torqueValue, float):
-                raise TypeError(f"ERROR: value ({torqueValue}) is not type float")
-            self.motors.set_torque(torqueValue)
+        if self.mode not in {"MANUAL", "AUTO"}:
+            print(f"ERROR: Cannot set torque in mode '{self.mode}'")
+            return
+        try:
+            torque_value = float(data) * TORQUE_SCALE
+            self.motors.set_torque(torque_value)
+        except Exception:
+            print(f"ERROR: Invalid torque data: {data}")
 
-    def msg_handling(self, messageType, data):
-        match messageType: 
-            case "brake_rdy":
-                print("rcv brake_rdy")
-                self.on_rdy(messageType)
-            case "steer_rdy":
-                self.on_rdy(messageType)
-            case "accel_pedal":
-                self.on_set_torque(data)
-            # TODO : Implémenter autres messages
-            case "brake_enable":
-               self.on_ending()
-            case _ :
-                self.handle_event(messageType, data)
-
-    def handle_event(self, messageType, data):
-        print(f"Le type de message [{messageType}, {data}] n'est pas pris en charge dans l'état {self.state}")
+    def handle_event(self, message_type, data):
+        print(f"[Unhandled] {message_type}, data: {data}, state: {self.state}")
 
     def on_ending(self):
-        print("\t\tClosing up and erasing...")
-        self.bus.shutdown()
-
-    def bus_listen(self):
-        try:
-            self.running = True
-            beforeMsg = None
-            print("trying bus listen ")
-            while self.running:
-                currentMsg = self.listener.can_input()
-                if currentMsg is not None and currentMsg != beforeMsg:
-                    beforeMsg = currentMsg
-                    messageType = currentMsg[1]
-                    data = currentMsg[2]
-                    print(f"Message Type: {messageType}, Data: {data}")
-                    self.msg_handling(messageType, data)
-                    
-        except KeyboardInterrupt:
-            print("Arrêt manuel détecté.")
-        finally:
-            self.on_ending()
+        print("Shutting down...")
+        self.can_system.stop()
 
 if __name__ == "__main__":
-    obu = OBU(verbose=False)
+    obu = OBU(verbose=True)

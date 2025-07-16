@@ -35,7 +35,8 @@ class MotorController:
         self._print("Trying to Connect To SOLO")
         while True:
             time.sleep(1)
-            connected, _ = self.mySolo.communication_is_working()
+            connected, er = self.mySolo.communication_is_working()
+            self._print(f"[{self.node}]Motor Speed [RPM]: {connected} | Error: {er}")
             if connected:
                 break
         self._print("Communication Established successfully!")
