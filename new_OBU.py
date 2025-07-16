@@ -1,6 +1,5 @@
 from DualMotorController import DualMotorController
 import can
-import time
 from CAN_system.class_CanManager import CANManager, CANReceiver
 from VehicleController import VehicleController
 
@@ -18,34 +17,20 @@ class OBU:
         self.notifier = can.Notifier(self.bus, [self.listener])
         self.running = False
         self.vehicleController = VehicleController()
+        self.tabRdy_rcv = []
         self.mode = None
         self.state = None
 
         self.change_mode("INITIALIZE")
-    
-    def _print(self, *args, **kwargs):
-        if self.verbose:
-            print("[",self.node,"]",*args, **kwargs)
-    
-    def initialize_BRAKE(self):
-        self._print("Trying to Connect To Brake device")
-        while True:
-            time.sleep(1)
-            self.can_manager.can_send("BRAKE", "start", 0)
-            currentMsg = self.listener.can_input()
-            if currentMsg[1] == "brake_rdy":
-                break
-        self._print("Communication Established successfully with Brake device !")
-
 
     def change_mode(self, newMode):
         self.mode = newMode
         match self.mode:
             case "INITIALIZE":
-                self.initialize_BRAKE()
-                self.change_mode("START")
-            case "START":
+                self.can_manager.can_send("BRAKE", "start", 0)
+                print("i'm in init mode")
                 self.bus_listen()
+            case "START":
                 self.change_mode("MANUAL") # Default
             case "MANUAL":
                 self.change_state("FORWARD") # Default
@@ -70,22 +55,37 @@ class OBU:
                 self.state = None
                 self.change_mode("ERROR")
 
+    def on_rdy(self, messageType):
+        if self.mode == "INITIALIZE" and messageType not in self.tabRdy_rcv: # Voir si on doit réceptionner plusieurs rdy
+            print("I'm in")
+            self.tabRdy_rcv.append(messageType)
+            if len(self.tabRdy_rcv) != 0: # A voir s'il en faut plusieurs
+                print("let's start")
+                self.change_mode("START")
+
     def on_set_torque(self, data):
         if self.mode not in ["MANUAL", "AUTO"]:
-            raise TypeError(f"ERROR: set torque ({data}) is not possible in {self.mode} mode")
-        torqueValue = (float(data)*MAX_TORQUE/1023)
-        if not isinstance(torqueValue, float):
-            raise TypeError(f"ERROR: value ({torqueValue}) is not type float")
-        self.motors.set_torque(torqueValue)
-        #self.mode = "AUTO"
+            print(f"ERROR: set torque ({data}) is not possible in {self.mode} mode")
+        else:
+            torqueValue = (float(data)*MAX_TORQUE/1023)
+            if not isinstance(torqueValue, float):
+                raise TypeError(f"ERROR: value ({torqueValue}) is not type float")
+            self.motors.set_torque(torqueValue)
 
     def msg_handling(self, messageType, data):
         match messageType: 
+            case "brake_rdy":
+                print("rcv brake_rdy")
+                self.on_rdy(messageType)
+            case "steer_rdy":
+                self.on_rdy(messageType)
             case "accel_pedal":
                 self.on_set_torque(data)
             # TODO : Implémenter autres messages
+            case "brake_enable":
+               self.on_ending()
             case _ :
-                self.handle_event(self, messageType, data)
+                self.handle_event(messageType, data)
 
     def handle_event(self, messageType, data):
         print(f"Le type de message [{messageType}, {data}] n'est pas pris en charge dans l'état {self.state}")
@@ -98,6 +98,7 @@ class OBU:
         try:
             self.running = True
             beforeMsg = None
+            print("trying bus listen ")
             while self.running:
                 currentMsg = self.listener.can_input()
                 if currentMsg is not None and currentMsg != beforeMsg:
@@ -109,7 +110,6 @@ class OBU:
                     
         except KeyboardInterrupt:
             print("Arrêt manuel détecté.")
-            self.on_ending()
         finally:
             self.on_ending()
 
