@@ -11,7 +11,7 @@ import can
 import re
 
 class CANManager:
-    def __init__(self,bus, device_name = 'OBU', can_list_path = 'CAN_system/Can_List.txt', ui=None):
+    def __init__(self,bus, device_name = 'OBU', can_list_path = 'CAN_system/can_list.txt', ui=None):
         self.device_name = device_name
         self.ui = ui
         self.device_id_map, self.order_id_map, self.device_id_reverse_map, self.order_id_reverse_map = self.load_can_list(can_list_path)
