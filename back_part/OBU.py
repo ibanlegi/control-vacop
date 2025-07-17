@@ -1,3 +1,11 @@
+# File: OBU.py
+# This file is part of the VACOP project.
+# Created by Rémi Myard
+# Modified by Iban LEGINYORA and Tinhinane AIT-MESSAOUD
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the MIT License
+
+
 from ..CAN_system.CANSystem import CANSystem
 from DualMotorController import DualMotorController
 
