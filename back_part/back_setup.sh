@@ -1,3 +1,4 @@
+# chmod +x back_setup.sh
 # source back_setup.sh
 
 #!/bin/bash
