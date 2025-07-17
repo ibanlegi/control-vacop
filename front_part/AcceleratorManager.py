@@ -17,8 +17,8 @@ class AcceleratorManager:
     def __init__(self, verbose=False):
         self.verbose = verbose
         self.mcp = Adafruit_MCP3008.MCP3008(clk=21, cs=7, miso=19, mosi=20)
-        self.can_system = CANSystem(verbose=self.verbose)
-        self.can_system.set_callback(self.read_accelerator)
+        self.can_system = CANSystem(verbose=self.verbose, device_name='BRAKE')
+        #self.can_system.set_callback(self.read_accelerator)
         self.lastAccelPedal = None
         self.on_init()
 
@@ -59,7 +59,7 @@ class AcceleratorManager:
         if self.verbose:
             print(*args, **kwargs)
 
-    def read_accelerator(self, device = None, order = None, data=None):
+    def read_accelerator(self):
         # This function is called back on CAN message reception
         # We'll read the accelerator sensor value and send it on CAN if it changed enough
 
