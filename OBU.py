@@ -1,4 +1,4 @@
-from CAN_system.can_system import CANSystem
+from CAN_system.CANSystem import CANSystem
 from DualMotorController import DualMotorController
 
 MAX_TORQUE = 20.0
