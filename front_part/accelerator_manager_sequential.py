@@ -11,25 +11,6 @@ bus = can.interface.Bus(channel='can0', bustype='socketcan', receive_own_message
 #Set the DEVICE as brake. It will setup the DEVICE id in the canbus
 DEVICE = "BRAKE"
 
-# Set GPIO mode to BCM
-GPIO.setmode(GPIO.BCM)
-
-
-# Set PWM frequency (Hz)
-PWM_FREQ_BRAKE = 20000
-
-# Set GPIO pins for actuator control
-EXTEND_PWM_PIN = 13
-RETRACT_PWM_PIN = 12
-EXTEND_EN_PIN = 23
-RETRACT_EN_PIN = 24
-GPIO.setup([EXTEND_PWM_PIN, RETRACT_PWM_PIN, EXTEND_EN_PIN, RETRACT_EN_PIN], GPIO.OUT)
-extend_pwm = GPIO.PWM(EXTEND_PWM_PIN, PWM_FREQ_BRAKE)
-retract_pwm = GPIO.PWM(RETRACT_PWM_PIN, PWM_FREQ_BRAKE)
-
-# Set GPIO pin for override brake button
-BRAKE_PIN = 25
-GPIO.setup(BRAKE_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 # MCP3008 configuration
 CLK = 21
@@ -38,19 +19,6 @@ MOSI = 20
 CS = 7
 mcp = Adafruit_MCP3008.MCP3008(clk=CLK, cs=CS, miso=MISO, mosi=MOSI)
 
-# Proportional gain (KP_BRAKE)
-KP_BRAKE = 15
-
-#Setup values of the braking actuator
-BRAKE_MAX_EXTEND = 800
-BRAKE_MIN_EXTEND = 500
-BRAKE_THRESHOLD = 10
-
-#NO_BRAKE = 700
-#FULL_BRAKE = 850
-
-NO_BRAKE = 600
-FULL_BRAKE = 750
 
 last_accel_pedal = None
 ACCEL_THRESHOLD = 0
@@ -95,7 +63,7 @@ def load_can_list(filename):
 
     return device_id_map, order_id_map, device_id_reverse_map, order_id_reverse_map
     
-device_id_map, order_id_map, device_id_reverse_map, order_id_reverse_map = load_can_list('CAN_List.txt')
+device_id_map, order_id_map, device_id_reverse_map, order_id_reverse_map = load_can_list('../CAN_system/can_list.txt')
 
 def can_send(device_ID, order_ID, data=None):
     # Convert human-readable IDs to their corresponding hex values
@@ -179,11 +147,6 @@ def read_accelerator():
         # Update the last value
         last_accel_pedal = accel_pedal
         can_send("OBU","accel_pedal",accel_pedal)
-
-# Open the CSV file in write mode to clear it and write the header
-with open('sensor_log.csv', 'w', newline='') as csvfile:
-    csvwriter = csv.writer(csvfile)
-    csvwriter.writerow(['Time', 'Accel Pedal', 'Brake Pos Set', 'Brake Pos Real'])
     
 def init(message_listener):
     global running
@@ -217,13 +180,6 @@ def main():
             message_listener = CanReceive()
             can.Notifier(bus, [message_listener])
 
-            # Start PWM
-            extend_pwm.start(0)
-            retract_pwm.start(0)
-
-            #Start button event detection
-            #GPIO.add_event_detect(BRAKE_PIN, GPIO.BOTH, callback=brake_override, bouncetime=20)
-
             while True:
                 #Initialise de position of the actuator
                 init(message_listener)
@@ -246,10 +202,7 @@ def main():
 
     
     except KeyboardInterrupt:
-        # Clean up GPIO
-        extend_pwm.stop()
-        retract_pwm.stop()
-        GPIO.cleanup()
+        print("KeyboardInterrupt")
 
     finally:
         # Close the CAN bus

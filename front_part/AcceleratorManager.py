@@ -7,7 +7,7 @@
 import time
 import Adafruit_MCP3008
 
-from ..CAN_system.CANSystem import CANSystem
+from CAN_system.CANSystem import CANSystem
 
 
 ACCEL_THRESHOLD = 0
@@ -45,17 +45,21 @@ class AcceleratorManager:
 
         self._print("Initializing system...\n")
 
-        for _ in range(3):
-            self.can_system.can_send("OBU", "brake_rdy")
+        self.can_system.can_send("OBU", "brake_rdy")
+        time.sleep(0.2)
+        self.can_system.can_send("OBU", "brake_rdy")
+        self.can_system.can_send("OBU", "brake_rdy")
 
         self._print("System initialized. Listening for further commands...\n")
-        self.can_system.start_listening()
+    
+        while True:
+            self.read_accelerator()
 
     def _print(self, *args, **kwargs):
         if self.verbose:
             print(*args, **kwargs)
 
-    def read_accelerator(self, device, order, data=None):
+    def read_accelerator(self, device = None, order = None, data=None):
         # This function is called back on CAN message reception
         # We'll read the accelerator sensor value and send it on CAN if it changed enough
 
@@ -73,6 +77,7 @@ class AcceleratorManager:
         if self.lastAccelPedal is None or abs(mapped_value - self.lastAccelPedal) > ACCEL_THRESHOLD:
             self.lastAccelPedal = mapped_value
             self.can_system.can_send("OBU", "accel_pedal", mapped_value)
+        
 
 
 if __name__ == "__main__":

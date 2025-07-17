@@ -5,9 +5,12 @@
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the MIT License
 
+# Execute : python3 -m back_part.OBU -v
 
-from ..CAN_system.CANSystem import CANSystem
-from DualMotorController import DualMotorController
+
+from CAN_system.CANSystem import CANSystem
+from .DualMotorController import DualMotorController
+import argparse
 
 MAX_TORQUE = 20.0
 TORQUE_SCALE = MAX_TORQUE / 1023.0
@@ -29,7 +32,7 @@ class OBU:
         self.mode = new_mode
         match self.mode:
             case "INITIALIZE":
-                self.can_system.send("BRAKE", "start", 0)
+                self.can_system.can_send("BRAKE", "start", 0)
                 self.can_system.start_listening()
             case "START":
                 self.change_mode("MANUAL")
@@ -90,4 +93,7 @@ class OBU:
         self.can_system.stop()
 
 if __name__ == "__main__":
-    obu = OBU(verbose=True)
+    parser = argparse.ArgumentParser(description="OBU system")
+    parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
+    args = parser.parse_args()
+    obu = OBU(verbose=args.verbose)
