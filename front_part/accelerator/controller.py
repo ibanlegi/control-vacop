@@ -1,3 +1,4 @@
+import time
 from sensor import AcceleratorSensor
 from ..AbstractClasses import AbstractController
 from ..CANAdapter import CANAdapter
@@ -23,6 +24,7 @@ class AcceleratorController(AbstractController):
     def initialize(self):
         for _ in range(3):
             self.transport.send("OBU", "brake_rdy")
+            time.sleep(0.2)
 
     def update(self):
         if not self.running:
@@ -45,4 +47,4 @@ class AcceleratorController(AbstractController):
     
     def _print(self, *args, **kwargs):
         if self.verbose:
-            print("[CONTROLLER]", *args, **kwargs)
+            print("[CTRL ACCELERATOR]", *args, **kwargs)

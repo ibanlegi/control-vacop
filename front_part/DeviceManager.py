@@ -43,6 +43,7 @@ class DeviceManager:
 
     def stop_all(self):
         self.running = False
+        controller:AbstractController = None
         for controller in self.controllers:
             if hasattr(controller, 'transport'):
                 controller.transport.stop()

@@ -32,4 +32,4 @@ class AcceleratorSensor(AbstractSensor):
 
     def _print(self, *args, **kwargs):
         if self.verbose:
-            print("[SENSOR]",*args, **kwargs)
+            print("[SENSOR ACCELERATOR]",*args, **kwargs)

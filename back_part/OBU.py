@@ -43,7 +43,8 @@ class OBU:
         self.mode = newMode
         match self.mode:
             case "INITIALIZE":
-                self.canSystem.can_send("BRAKE", "start", 0)
+                #self.canSystem.can_send("BRAKE", "start", 0)
+                self.canSystem.can_send("STEER", "start", 0)
                 self.canSystem.start_listening()
             case "START":
                 self._change_mode("MANUAL")
