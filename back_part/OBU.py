@@ -8,7 +8,7 @@
 # Execute : python3 -m back_part.OBU -v
 
 
-from ..CAN_system.CANSystem import CANSystem
+from CAN_system.CANSystem import CANSystem
 from .DualMotorController import DualMotorController
 import argparse
 
