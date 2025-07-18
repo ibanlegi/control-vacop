@@ -58,7 +58,7 @@ class OBU:
                 self._on_ending()
             case _:
                 print(f"Unknown mode '{self.mode}'")
-                self.change_mode("OFF")
+                self._change_mode("OFF")
 
     def _change_state(self, newState):
         self.state = newState
@@ -91,6 +91,8 @@ class OBU:
 
     def _on_ending(self):
         print("Shutting down...")
+        #self.canSystem.can_send("BRAKE", "stop", 0)
+        self.canSystem.can_send("STEER", "stop", 0)
         self.canSystem.stop()
 
 if __name__ == "__main__":
