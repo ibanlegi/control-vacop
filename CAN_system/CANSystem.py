@@ -2,15 +2,15 @@
 # This file is part of the OBU project.
 # Created by Rémi Myard
 # Modified by Iban LEGINYORA and Tinhinane AIT-MESSAOUD
-# Licensed under the MIT License
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the MIT License
 
 import can
 import re
 
 class CANManager:
-    def __init__(self, bus, device_name, can_list_path='CAN_system/can_list.txt', ui=None):
+    def __init__(self, bus, device_name, can_list_path='CAN_system/can_list.txt'):
         self.device_name = device_name
-        self.ui = ui
         self.device_id_map, self.order_id_map, self.device_id_reverse_map, self.order_id_reverse_map = self.load_can_list(can_list_path)
         self.bus = bus
 
@@ -54,9 +54,6 @@ class CANManager:
         can_message = can.Message(arbitration_id=arbitration_id, data=data_bytes, is_extended_id=False)
         self.bus.send(can_message)
 
-        if self.ui:
-            self.ui.log_to_terminal(f"Sent: {device_id} {order_id} {data}")
-
 
 
 class CANReceiver(can.Listener):
@@ -84,8 +81,6 @@ class CANReceiver(can.Listener):
         if device == self.manager.device_name:
             key = (device, order)
             if key not in self.last_data or self.last_data[key] != data:
-                if self.manager.ui:
-                    self.manager.ui.log_to_terminal(f"Received: {device} {order} {data}")
                 self.last_data[key] = data
             return device, order, data
         return None
@@ -94,9 +89,10 @@ class CANReceiver(can.Listener):
 
 class CANSystem:
     def __init__(self,device_name, channel='can0', interface='socketcan', verbose=False):
+        self.device_name = device_name
         self.verbose = verbose
         self.bus = can.interface.Bus(channel=channel, interface=interface, receive_own_messages=False)
-        self.can_manager = CANManager(self.bus,device_name)
+        self.can_manager = CANManager(bus=self.bus, device_name=self.device_name)
         self.listener = CANReceiver(self.can_manager)
         self.notifier = can.Notifier(self.bus, [self.listener])
         self.running = False
@@ -106,8 +102,7 @@ class CANSystem:
         self.callback = callback_fn
 
     def start_listening(self):
-        if self.verbose:
-            print("CANSystem: Listening on CAN bus...")
+        if self.verbose: print("CANSystem: Listening on CAN bus...")
         self.running = True
         previous_msg = None
 
