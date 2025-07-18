@@ -8,7 +8,7 @@
 # Execute : python3 -m back_part.OBU -v
 
 
-from CAN_system.CANSystem import CANSystem
+from ..CAN_system.CANSystem import CANSystem
 from .DualMotorController import DualMotorController
 import argparse
 
@@ -19,7 +19,7 @@ class OBU:
     def __init__(self, verbose=False):
         self.verbose = verbose
         self.motors = DualMotorController(verbose=self.verbose)
-        self.can_system = CANSystem(verbose=self.verbose)
+        self.can_system = CANSystem(device_name="OBU",verbose=self.verbose)
         self.can_system.set_callback(self.on_can_message)
 
         self.tabRdy_rcv = set()

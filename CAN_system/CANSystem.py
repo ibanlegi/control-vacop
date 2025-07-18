@@ -8,7 +8,7 @@ import can
 import re
 
 class CANManager:
-    def __init__(self, bus, device_name='OBU', can_list_path='CAN_system/can_list.txt', ui=None):
+    def __init__(self, bus, device_name, can_list_path='CAN_system/can_list.txt', ui=None):
         self.device_name = device_name
         self.ui = ui
         self.device_id_map, self.order_id_map, self.device_id_reverse_map, self.order_id_reverse_map = self.load_can_list(can_list_path)
@@ -93,10 +93,10 @@ class CANReceiver(can.Listener):
 
 
 class CANSystem:
-    def __init__(self, channel='can0', interface='socketcan', verbose=False):
+    def __init__(self,device_name, channel='can0', interface='socketcan', verbose=False):
         self.verbose = verbose
         self.bus = can.interface.Bus(channel=channel, interface=interface, receive_own_messages=False)
-        self.can_manager = CANManager(self.bus)
+        self.can_manager = CANManager(self.bus,device_name)
         self.listener = CANReceiver(self.can_manager)
         self.notifier = can.Notifier(self.bus, [self.listener])
         self.running = False
