@@ -46,7 +46,7 @@ class SteerManager :
         GPIO.setup([STEER_EN_PIN, STEER_PUL_PIN, STEER_DIR_PIN], GPIO.OUT)
         self.pulse = GPIO.PWM(STEER_PUL_PIN, PWM_FREQ_STEER)
         self.mcp = Adafruit_MCP3008.MCP3008(clk=CLK, cs=CS, miso=MISO, mosi=MOSI)
-        self.can_system = CANSystem(device_name="Steer",verbose=self.verbose)
+        self.can_system = CANSystem(device_name="STEER",verbose=self.verbose)
         self.can_system.set_callback(self.treat_can_message)
     
         self.running = False
@@ -77,10 +77,13 @@ class SteerManager :
             control_value = KP_STEER * error
 
             # Ensure control value is within limits to activate the motor
-            if ( STEER_LEFT_LIMIT <= read_position and read_position <= STEER_RIGHT_LIMIT) :
-                GPIO.output(STEER_EN_PIN, GPIO.LOW)
-            else :
+            if ( STEER_LEFT_LIMIT > read_position or read_position > STEER_RIGHT_LIMIT) :
                 GPIO.output(STEER_EN_PIN, GPIO.HIGH)
+                self._print("Steering out of bounds, disabling motor")
+                return
+            
+            GPIO.output(STEER_EN_PIN, GPIO.LOW)
+                
             
             # define the direction of the wheel spin 
             if control_value > STEER_THRESHOLD: 
@@ -93,18 +96,17 @@ class SteerManager :
             else:
                 self.pulse.ChangeDutyCycle(0)
 
-    def treat_can_message(self, message):
-        order_id = message[1]
-        data = message[2]
-        match order_id : 
-            case "start" :          
+    def treat_can_message(self, message_type, data):
+        order_id = message_type
+        print("my message type is",order_id)
+        if order_id == "start" : 
                 self.running = True
-            case "stop" :           
+        elif order_id =="stop" :           
                 self.running = False
                 return 
-            case "steer_enable":    self.steer_enable = data
-            case "steer_pos_set":  self.last_steer = data
-            case _ :
+        elif order_id == "steer_enable":    self.steer_enable = data
+        elif order_id == "steer_pos_set":  self.last_steer = data
+        else :
                 self._print(f"Unknown order_id: {order_id}")
                 re.error(f"Unknown order_id: {order_id}")
         
@@ -112,11 +114,19 @@ class SteerManager :
         if actual_steer != self.last_steer:
             self._print(f"Steer position we have: { actual_steer} || Steer position we want-> {self.last_steer}")
             self.steer(self.last_steer, self.steer_enable)
+
         
     def initialize(self):
+        self._print("let's wait")
         while not self.running:
-            self.can_system.start_listening()
-            self._print("Waiting for start command...")
+            can_msg = self.can_system.listener.can_input()
+            if can_msg is not None:
+                self._print("Received CAN message:", can_msg)
+
+                if isinstance(can_msg, tuple) and len(can_msg) >= 3:
+                    _, order_id, data = can_msg
+                    self.treat_can_message(order_id, data)
+
         self._print("SteerManager received true")
 
         steer_position = self.read_steer_position()
@@ -126,6 +136,7 @@ class SteerManager :
             steer_position = self.read_steer_position()
         
         self.can_system.send("OBU", "steer_rdy", None)
+        time.sleep(0.2)
         self.can_system.send("OBU", "steer_rdy", None)
         self.can_system.send("OBU", "steer_rdy", None)
 
@@ -135,14 +146,16 @@ class SteerManager :
     def main(self) : 
         try :
             self.pulse.start(0)  # Start PWM with 0% duty cycle
-            GPIO.add_event_detect(BRAKE_PIN, GPIO.BOTH, callback=self.brake_override, bouncetime=20)
+            #GPIO.add_event_detect(BRAKE_PIN, GPIO.BOTH, callback=self.brake_override, bouncetime=20)
             while 1 :
                 self.initialize()
                 self._print("SteerManager is running...")
                 while self.running:
-                    self.can_system.start_listening()
-                    time.sleep(0.1)
-                    # the treatment of the can message is done in the callback function (treat_can_message)
+                    can_msg = self.can_system.listener.can_input()
+                    if can_msg is not None:
+                        self._print("Received CAN message:", can_msg)
+                        _, order_id, data = can_msg
+                        self.treat_can_message(order_id, data)
                 
                 self.__print("SteerManager stopped.")
                 self.steer(self.last_steer, False)
@@ -150,9 +163,8 @@ class SteerManager :
 
         except KeyboardInterrupt:
             self._print("SteerManager interrupted by user.")
-            # self.extend_pwm.stop()
-            # self.retract_pwm.stop()
             GPIO.cleanup()
+            self.pulse.stop()
         finally :
             self._print("Shutting Down SteerManager...")
             self.can_system.stop()
