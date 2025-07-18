@@ -1,6 +1,6 @@
 import argparse
 import time
-from .MotorController import MotorController
+from .MotorController_test import MotorController
 
 class DualMotorController:
     def __init__(self, verbose=False):

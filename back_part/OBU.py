@@ -19,6 +19,7 @@ class OBU:
     def __init__(self, verbose=False):
         self.verbose = verbose
         self.motors = DualMotorController(verbose=self.verbose)
+        self.can_system = CANSystem(device_name="OBU",verbose=self.verbose)
         self.can_system = CANSystem(verbose=self.verbose, device_name='OBU')
         self.can_system.set_callback(self.on_can_message)
 
