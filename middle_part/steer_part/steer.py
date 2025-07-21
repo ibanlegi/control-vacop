@@ -125,9 +125,9 @@ class SteerManager :
             self.steer(NEUTRAL_POSITION, True)
             steer_position = self.read_steer_position()
         
-        self.can_system.send("OBU", "steer_rdy", None)
-        self.can_system.send("OBU", "steer_rdy", None)
-        self.can_system.send("OBU", "steer_rdy", None)
+        self.can_system.can_send("OBU", "steer_rdy", None)
+        self.can_system.can_send("OBU", "steer_rdy", None)
+        self.can_system.can_send("OBU", "steer_rdy", None)
 
         self._print("SteerManager initialized and ready.")
     
