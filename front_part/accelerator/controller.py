@@ -1,6 +1,6 @@
 import time
 from sensor import AcceleratorSensor
-from ..AbstractClasses import AbstractController
+from ...AbstractClasses import AbstractController
 from ..CANAdapter import CANAdapter
 
 class AcceleratorController(AbstractController):
@@ -44,6 +44,9 @@ class AcceleratorController(AbstractController):
 
         if self.sensor.has_changed(mapped):
             self.transport.send("OBU", "accel_pedal", mapped)
+    
+    def stop(self):
+        self.transport.stop()
     
     def _print(self, *args, **kwargs):
         if self.verbose:

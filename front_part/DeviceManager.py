@@ -3,7 +3,7 @@ import time
 from accelerator.sensor import AcceleratorSensor
 from accelerator.controller import AcceleratorController
 from CANAdapter import CANAdapter
-from AbstractClasses import AbstractController
+from ..AbstractClasses import AbstractController
 
 class DeviceManager:
     def __init__(self, controllers: list[AbstractController], verbose = False):
@@ -43,15 +43,17 @@ class DeviceManager:
 
     def stop_all(self):
         self.running = False
-        controller:AbstractController = None
         for controller in self.controllers:
-            if hasattr(controller, 'transport'):
-                controller.transport.stop()
+            controller.stop()
         self._print("All resources cleaned up.")
+    
+    def __del__(self):
+        self._print("Destructor called, cleaning up ...")
+        self.stop_all()
     
     def _print(self, *args, **kwargs):
         if self.verbose:
-            print("[SYSTEM]", *args, **kwargs)
+            print("[DeviceManager]", *args, **kwargs)
 
 
 if __name__ == "__main__":
