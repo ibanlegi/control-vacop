@@ -12,7 +12,7 @@ import time
 import Adafruit_MCP3008
 import re
 import csv
-from ..CAN_system.CANSystem import CANSystem
+from ...CAN_system.CANSystem import CANSystem
 
 
 PWM_FREQ_STEER = 1000
