@@ -9,7 +9,7 @@
 
 
 from CAN_system.CANSystem import CANSystem
-from .DualMotorController import DualMotorController
+#from .DualMotorController import DualMotorController
 import argparse
 
 MAX_TORQUE = 20.0
@@ -18,7 +18,7 @@ TORQUE_SCALE = MAX_TORQUE / 1023.0
 class OBU:
     def __init__(self, verbose=False):
         self.verbose = verbose
-        self.motors = DualMotorController(verbose=self.verbose)
+        #self.motors = DualMotorController(verbose=self.verbose)
         self.canSystem = CANSystem(verbose=self.verbose, device_name='OBU')
         self.readyComponents = set()
         self.mode = None
@@ -45,6 +45,7 @@ class OBU:
             case "INITIALIZE":
                 #self.canSystem.can_send("BRAKE", "start", 0)
                 self.canSystem.can_send("STEER", "start", 0)
+                print("INIT")
                 self.canSystem.start_listening()
             case "START":
                 self._change_mode("MANUAL")
@@ -66,9 +67,11 @@ class OBU:
         self.state = newState
         match self.state:
             case "FORWARD":
-                self.motors.set_forward()
+                #self.motors.set_forward()
+                print("Direction : FORWARD")
             case "REVERSE":
-                self.motors.set_reverse()
+                #self.motors.set_reverse()
+                print("Direction : REVERSE")
             case "ERROR":
                 self._change_mode("ERROR")
 
@@ -84,7 +87,8 @@ class OBU:
             return
         try:
             torque_value = float(data) * TORQUE_SCALE
-            self.motors.set_torque(torque_value)
+            #self.motors.set_torque(torque_value)
+            print("New torque = ", torque_value)
         except Exception:
             print(f"ERROR: Invalid torque data: {data}")
 
