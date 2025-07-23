@@ -50,8 +50,10 @@ class OBU:
                 self._change_mode("MANUAL")
             case "MANUAL":
                 self._change_state("FORWARD")
+                self.canSystem.can_send("STEER", "steer_enable", False)
             case "AUTO":
                 print("AUTO mode not implemented.")
+                self.canSystem.can_send("STEER", "steer_enable", True)
             case "ERROR":
                 self._change_mode("INITIALIZE")
             case "OFF":

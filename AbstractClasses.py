@@ -39,3 +39,10 @@ class AbstractController(ABC):
         sending messages, or reacting to state changes.
         """
         pass
+    
+    @abstractmethod
+    def stop(self):
+        """
+        Stops the controller and cleans up resources.
+        """
+        pass

@@ -1,5 +1,5 @@
 import Adafruit_MCP3008
-from ..AbstractClasses import AbstractSensor
+from ...AbstractClasses import AbstractSensor
 
 class AcceleratorSensor(AbstractSensor):
     def __init__(self, channel=0, clk=21, cs=7, miso=19, mosi=20, verbose=False):

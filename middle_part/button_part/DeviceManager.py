@@ -1,15 +1,14 @@
 import argparse
 import time
-from accelerator.sensor import AcceleratorSensor
-from accelerator.controller import AcceleratorController
-from CANAdapter import CANAdapter
-from ..AbstractClasses import AbstractController
+import RPi.GPIO as GPIO
+from ButtonController import ButtonController
+from ...AbstractClasses import AbstractController
 
 class DeviceManager:
-    def __init__(self, controllers: list[AbstractController], verbose = False):
+    def __init__(self, controllers: list[AbstractController], verbose=False):
         self.verbose = verbose
         self.controllers = controllers
-        self.running = True
+        self.running = False
 
     def run(self):
         self._print("Waiting for 'start' command from CAN...")
@@ -43,12 +42,14 @@ class DeviceManager:
 
     def stop_all(self):
         self.running = False
+        self._print("Cleaning up controllers and GPIO...")
         for controller in self.controllers:
             controller.stop()
-        self._print("All resources cleaned up.")
-    
+        GPIO.cleanup()
+        self._print("Cleanup completed.")
+
     def __del__(self):
-        self._print("Destructor called, cleaning up ...")
+        self._print("Destructor called, cleaning up GPIO...")
         self.stop_all()
     
     def _print(self, *args, **kwargs):
@@ -57,13 +58,16 @@ class DeviceManager:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="DeviceManager to front vacop system")
+    parser = argparse.ArgumentParser(description="DeviceManager to middle vacop system")
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
     args = parser.parse_args()
-    
-    sensor = AcceleratorSensor(verbose=args.verbose)
-    transport = CANAdapter(verbose=args.verbose)
-    accel_controller = AcceleratorController(sensor, transport, verbose=args.verbose)
 
-    manager = DeviceManager([accel_controller], verbose=args.verbose)
+    controllers = [
+        ButtonController("bouton_park", 22, verbose=args.verbose),
+        #ButtonController("bouton_auto_manu", 23, verbose=args.verbose),
+        #ButtonController("bouton_on_off", 24, verbose=args.verbose),
+        #ButtonController("bouton_reverse", None, verbose=args.verbose),
+    ]
+
+    manager = DeviceManager(controllers, verbose=args.verbose)
     manager.run()
