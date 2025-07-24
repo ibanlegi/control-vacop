@@ -1,6 +1,6 @@
 import time
-from sensor import AcceleratorSensor
-from ...AbstractClasses import AbstractController
+from .sensor import AcceleratorSensor
+from AbstractClasses import AbstractController
 from ..CANAdapter import CANAdapter
 
 class AcceleratorController(AbstractController):

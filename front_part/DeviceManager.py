@@ -1,9 +1,9 @@
 import argparse
 import time
-from accelerator.sensor import AcceleratorSensor
-from accelerator.controller import AcceleratorController
-from CANAdapter import CANAdapter
-from ..AbstractClasses import AbstractController
+from .accelerator.sensor import AcceleratorSensor
+from .accelerator.controller import AcceleratorController
+from .CANAdapter import CANAdapter
+from AbstractClasses import AbstractController
 
 class DeviceManager:
     def __init__(self, controllers: list[AbstractController], verbose = False):
