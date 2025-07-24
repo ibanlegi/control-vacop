@@ -50,7 +50,6 @@ class OBU:
                 self._handle_event(messageType, data)
 
     def _change_mode(self, newMode):
-        global verif_bool
         self.mode = newMode
         match self.mode:
             case "INITIALIZE":

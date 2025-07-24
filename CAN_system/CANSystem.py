@@ -110,6 +110,7 @@ class CANSystem:
 
         while self.running:
             msg = self.listener.can_input()
+            print("msg : ", msg)
             if msg and isinstance(msg, tuple) and len(msg) == 3 and msg != previous_msg:
                 previous_msg = msg
                 if self.callback:
