@@ -7,6 +7,9 @@
 
 import can
 import re
+import threading
+import queue
+
 
 class CANManager:
     def __init__(self, bus, device_name, can_list_path='CAN_system/can_list.txt'):
@@ -60,30 +63,27 @@ class CANReceiver(can.Listener):
     def __init__(self, manager: CANManager):
         super().__init__()
         self.manager = manager
-        self.last_received_message = None
         self.last_data = {}
+        self.msg_queue = queue.Queue()
 
     def on_message_received(self, msg):
-        self.last_received_message = msg
+        self.msg_queue.put(msg)
 
     def can_input(self):
-        if self.last_received_message is None:
+        try:
+            msg = self.msg_queue.get_nowait()
+        except queue.Empty:
             return None
 
-        arbitration_id = self.last_received_message.arbitration_id
+        arbitration_id = msg.arbitration_id
         device_hex = hex(arbitration_id >> 8)[2:].zfill(2)
         order_hex = hex(arbitration_id & 0xFF)[2:].zfill(2)
-        data = int.from_bytes(self.last_received_message.data, byteorder='big')
+        data = int.from_bytes(msg.data, byteorder='big')
 
         device = self.manager.device_id_reverse_map.get(device_hex, device_hex)
         order = self.manager.order_id_reverse_map.get(order_hex, order_hex)
 
         if device == self.manager.device_name:
-            key = (device, order)
-            self.last_received_message = None
-            if key not in self.last_data or self.last_data[key] != data:
-                self.last_data[key] = data
-                
             return device, order, data
         return None
 
@@ -103,22 +103,46 @@ class CANSystem:
     def set_callback(self, callback_fn):
         self.callback = callback_fn
 
-    def start_listening(self):
+    def start_listeningNOTHREAD(self):
+        print("start_listen")
         if self.verbose: print("CANSystem: Listening on CAN bus...")
         self.running = True
         previous_msg = None
 
         while self.running:
             msg = self.listener.can_input()
-            print("msg : ", msg)
             if msg and isinstance(msg, tuple) and len(msg) == 3 and msg != previous_msg:
                 previous_msg = msg
                 if self.callback:
+                    print("NEW MESSAGE : ", msg)
                     self.callback(*msg)
+    
+    def start_listening(self):
+        print("start_listen")
+        if self.verbose:
+            print("CANSystem: Listening on CAN bus...")
+
+        self.running = True
+
+        def listen_loop():
+            previous_msg = None
+            while self.running:
+                msg = self.listener.can_input()
+                if msg and isinstance(msg, tuple) and len(msg) == 3 and msg != previous_msg:
+                    previous_msg = msg
+                    if self.callback:
+                        print("NEW MESSAGE : ", msg)
+                        self.callback(*msg)
+
+        self.listen_thread = threading.Thread(target=listen_loop)
+        self.listen_thread.start()
 
     def stop(self):
         self.running = False
+        if hasattr(self, "listen_thread"):
+            self.listen_thread.join()
         self.bus.shutdown()
+
 
     def can_send(self, id_, sub_id, data=None):
         self.can_manager.can_send(id_, sub_id, data)
