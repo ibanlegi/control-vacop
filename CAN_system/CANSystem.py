@@ -80,8 +80,10 @@ class CANReceiver(can.Listener):
 
         if device == self.manager.device_name:
             key = (device, order)
+            self.last_received_message = None
             if key not in self.last_data or self.last_data[key] != data:
                 self.last_data[key] = data
+                
             return device, order, data
         return None
 
