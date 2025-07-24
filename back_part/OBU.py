@@ -31,6 +31,7 @@ class OBU:
     
     def on_can_message(self, _, messageType, data):
         """Callback function"""
+        print(f"[Unhandled] {messageType}, data: {data}, state: {self.state}")
         match messageType:
             case "brake_rdy" | "steer_rdy":
                 self._on_rdy(messageType)
@@ -39,27 +40,37 @@ class OBU:
             case "brake_enable":
                 self._on_ending()
             case "bouton_park":
-                print("Park Button Detection: Not implemented")
+                self._event_park_btn()
             case "bouton_auto_manu":
                 print("Auto/Manu Button Detection: Not implemented")
             case "bouton_on_off":
-                print("On/Off Button Detection: Not implemented")
+                self._event_on_off(data)
             case "bouton_reverse":
                 print("Reverse Button Detection: Not implemented")
             case _:
                 self._handle_event(messageType, data)
+    
+    def _event_park_btn(self):
+        print("Park Button Detection: Not implemented")
+    
+    def _event_on_off(self, data):
+        if data == 1:
+            self._change_state("FORWARD")
+        else:
+            self._change_state("REVERSE")
+
 
     def _change_mode(self, newMode):
         self.mode = newMode
         match self.mode:
             case "INITIALIZE":
-                #self.canSystem.can_send("BRAKE", "start", 0)
+                self.canSystem.can_send("BRAKE", "start", 0)
+                time.sleep(0.2)
                 self.canSystem.can_send("STEER", "start", 0)
-                time.sleep(0.5)
                 print("INIT")
                 self.canSystem.start_listening()
             case "START":
-                self._change_mode("MANUAL")
+                self._change_mode("AUTO")
             case "MANUAL":
                 self._change_state("FORWARD")
                 self.canSystem.can_send("STEER", "steer_enable", False)
@@ -72,6 +83,9 @@ class OBU:
                 time.sleep(10)
                 print("send value steer")
                 self.canSystem.can_send("STEER", "steer_pos_set", 350)
+                time.sleep(10)
+                self.canSystem.can_send("STEER","steer_enable",False)
+                print("END test")
             case "ERROR":
                 self._change_mode("INITIALIZE")
             case "OFF":
@@ -91,12 +105,15 @@ class OBU:
                 print("Direction : REVERSE")
             case "ERROR":
                 self._change_mode("ERROR")
+        print("on_change : END")
+        return
 
     def _on_rdy(self, msgType):
         if self.mode == "INITIALIZE" and msgType not in self.readyComponents:
             self.readyComponents.add(msgType)
-            if len(self.readyComponents) > 0:
+            if len(self.readyComponents) > 1:
                 self._change_mode("START")
+    
 
     def _on_set_torque(self, data):
         if self.mode not in {"MANUAL", "AUTO"}:
@@ -114,7 +131,7 @@ class OBU:
 
     def _on_ending(self):
         print("Shutting down...")
-        #self.canSystem.can_send("BRAKE", "stop", 0)
+        self.canSystem.can_send("BRAKE", "stop", 0)
         self.canSystem.can_send("STEER", "stop", 0)
         self.canSystem.stop()
 

@@ -83,6 +83,10 @@ class CANReceiver(can.Listener):
         device = self.manager.device_id_reverse_map.get(device_hex, device_hex)
         order = self.manager.order_id_reverse_map.get(order_hex, order_hex)
 
+        print("arbitration_id :", arbitration_id)
+        print("device_hex :", device_hex, "-> device :", device)
+        print("order_hex : ", order_hex, "-> order", order)
+        print("data")
         if device == self.manager.device_name:
             return device, order, data
         return None
@@ -103,7 +107,7 @@ class CANSystem:
     def set_callback(self, callback_fn):
         self.callback = callback_fn
 
-    def start_listeningNOTHREAD(self):
+    def start_listeningNOTHREAD(self): # A supprimer
         print("start_listen")
         if self.verbose: print("CANSystem: Listening on CAN bus...")
         self.running = True

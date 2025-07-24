@@ -28,9 +28,9 @@ steer_pos_real = 51
 
 accel_pedal = 60
 
-bouton_on_off = 101
-bouton_auto_manu = 102
-bouton_reverse = 103
-bouton_park = 104
+bouton_on_off = 71
+bouton_auto_manu = 72
+bouton_reverse = 73
+bouton_park = 74
 
 }
