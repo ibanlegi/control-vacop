@@ -1,8 +1,8 @@
 import argparse
 import time
 import RPi.GPIO as GPIO
-from ButtonController import ButtonController
-from ...AbstractClasses import AbstractController
+from .ButtonController import ButtonController
+from AbstractClasses import AbstractController
 
 class DeviceManager:
     def __init__(self, controllers: list[AbstractController], verbose=False):

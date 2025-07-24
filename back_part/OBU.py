@@ -9,16 +9,18 @@
 
 
 from CAN_system.CANSystem import CANSystem
-#from .DualMotorController import DualMotorController
+from .DualMotorController import DualMotorController
 import argparse
+import time
 
 MAX_TORQUE = 20.0
 TORQUE_SCALE = MAX_TORQUE / 1023.0
 
+
 class OBU:
     def __init__(self, verbose=False):
         self.verbose = verbose
-        #self.motors = DualMotorController(verbose=self.verbose)
+        self.motors = DualMotorController(verbose=self.verbose)
         self.canSystem = CANSystem(verbose=self.verbose, device_name='OBU')
         self.readyComponents = set()
         self.mode = None
@@ -36,15 +38,25 @@ class OBU:
                 self._on_set_torque(data)
             case "brake_enable":
                 self._on_ending()
+            case "bouton_park":
+                print("Park Button Detection: Not implemented")
+            case "bouton_auto_manu":
+                print("Auto/Manu Button Detection: Not implemented")
+            case "bouton_on_off":
+                print("On/Off Button Detection: Not implemented")
+            case "bouton_reverse":
+                print("Reverse Button Detection: Not implemented")
             case _:
                 self._handle_event(messageType, data)
 
     def _change_mode(self, newMode):
+        global verif_bool
         self.mode = newMode
         match self.mode:
             case "INITIALIZE":
                 #self.canSystem.can_send("BRAKE", "start", 0)
                 self.canSystem.can_send("STEER", "start", 0)
+                time.sleep(0.5)
                 print("INIT")
                 self.canSystem.start_listening()
             case "START":
@@ -55,6 +67,12 @@ class OBU:
             case "AUTO":
                 print("AUTO mode not implemented.")
                 self.canSystem.can_send("STEER", "steer_enable", True)
+                time.sleep(5)
+                print("send value steer")
+                self.canSystem.can_send("STEER", "steer_pos_set", 700)
+                time.sleep(10)
+                print("send value steer")
+                self.canSystem.can_send("STEER", "steer_pos_set", 350)
             case "ERROR":
                 self._change_mode("INITIALIZE")
             case "OFF":
@@ -67,10 +85,10 @@ class OBU:
         self.state = newState
         match self.state:
             case "FORWARD":
-                #self.motors.set_forward()
+                self.motors.set_forward()
                 print("Direction : FORWARD")
             case "REVERSE":
-                #self.motors.set_reverse()
+                self.motors.set_reverse()
                 print("Direction : REVERSE")
             case "ERROR":
                 self._change_mode("ERROR")
@@ -87,7 +105,7 @@ class OBU:
             return
         try:
             torque_value = float(data) * TORQUE_SCALE
-            #self.motors.set_torque(torque_value)
+            self.motors.set_torque(torque_value)
             print("New torque = ", torque_value)
         except Exception:
             print(f"ERROR: Invalid torque data: {data}")

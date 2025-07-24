@@ -1,6 +1,6 @@
 import RPi.GPIO as GPIO
-from ...CAN_system.CANSystem import CANSystem
-from ...AbstractClasses import AbstractController
+from CAN_system.CANSystem import CANSystem
+from AbstractClasses import AbstractController
 
 class ButtonController(AbstractController):
     def __init__(self, name, pin, verbose=False):
