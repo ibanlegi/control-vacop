@@ -6,8 +6,8 @@
 # it under the terms of the MIT License
 
 #----------------------------------------------------------------------------
-# This system uses a FIFO (First In, First Out) queue to handle CAN messages.
-# Messages are processed in the order in which they are received.
+# This system uses a priority queue to handle CAN messages.
+# Messages are processed based on their priority rather than the order of arrival.
 #----------------------------------------------------------------------------
 
 import can
@@ -69,14 +69,34 @@ class CANReceiver(can.Listener):
         super().__init__()
         self.manager = manager
         self.last_data = {}
-        self.msg_queue = queue.Queue()
+        self.msg_queue = queue.PriorityQueue()
+    
+    def get_priority(self, msg):
+        arbitration_id = msg.arbitration_id
+        #device_hex = hex(arbitration_id >> 8)[2:].zfill(2) #not use
+        order_hex = hex(arbitration_id & 0xFF)[2:].zfill(2)
+
+        order = self.manager.order_id_reverse_map.get(order_hex, order_hex)
+
+        # List of priority orders (lower values = higher priority)
+        high_priority = {"brake_enable", "bouton_park", "bouton_on_off"}
+        medium_priority = {"accel_pedal"}
+
+        if order in high_priority:
+            return 0 
+        elif order in medium_priority:
+            return 1 
+        else:
+            return 2  # Default priority
+
 
     def on_message_received(self, msg):
-        self.msg_queue.put(msg)
+        priority = self.get_priority(msg)
+        self.msg_queue.put((priority, msg))
 
     def can_input(self):
         try:
-            msg = self.msg_queue.get_nowait()
+            priority, msg = self.msg_queue.get_nowait()
         except queue.Empty:
             return None
 
