@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 from CAN_system.CANSystem import CANSystem
 from AbstractClasses import AbstractController
+import time
 
 class ButtonController(AbstractController):
     def __init__(self, name, pin, verbose=False):
@@ -22,6 +23,7 @@ class ButtonController(AbstractController):
             self.previousState = buttonState
             self._print(f"{self.name} button {'pressed' if buttonState else 'released'}, button = {buttonState}")
             self.canSystem.can_send("OBU", self.name, buttonState)
+            time.sleep(0.05)
 
     def wait_for_start(self) -> bool:
         # Simple start condition, toujours prêt à démarrer

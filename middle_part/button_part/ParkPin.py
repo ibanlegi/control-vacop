@@ -2,11 +2,12 @@
 
 import RPi.GPIO as GPIO
 import time
-from ...CAN_system.CANSystem import CANSystem
+from CAN_system.CANSystem import CANSystem
 
 
 class ParkPin:
-    def __init__(self, parkPin):
+    def __init__(self, parkPin, verbose=False):
+        self.verbose = verbose
         GPIO.setmode(GPIO.BCM)
         self.pin = parkPin
         GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN) 
@@ -18,12 +19,12 @@ class ParkPin:
         if self.verbose:
             print(*args, **kwargs)
 
-    def _on_state_change(self):
+    def _on_state_change(self, data):
         buttonState = GPIO.input(self.pin)
         if buttonState != self.previousState:
             self.previousState = buttonState
             self._print(f"Parking button {'pressed' if buttonState else 'released'}, button = {buttonState}")
-            self.canSystem.send("OBU", "bouton_park", buttonState)
+            self.canSystem.can_send("OBU", "bouton_park", buttonState)
     
     def cleanup(self):
         GPIO.remove_event_detect(self.pin)

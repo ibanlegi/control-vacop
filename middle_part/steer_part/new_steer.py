@@ -59,6 +59,13 @@ class SteerManager(AbstractController):
                     self.treat_can_message(order_id, data)
         self._print("SteerManager received start signal.")
         return True
+    
+    def put_steer_to_manual (self):
+        self.pulse.ChangeDutyCycle(0)
+        self.pulse.stop()
+        self.pulse.start(0)
+        GPIO.output(STEER_EN_PIN, GPIO.HIGH)
+        
 
     def initialize(self):
         steer_position = self.read_steer_position()
@@ -67,6 +74,8 @@ class SteerManager(AbstractController):
             self._print(f"Steer position is {steer_position}, moving to neutral position...")
             self.steer(NEUTRAL_POSITION, True)
             steer_position = self.read_steer_position()
+            
+        self.put_steer_to_manual()
         
         self.can_system.can_send("OBU", "steer_rdy", None)
         time.sleep(0.2)
@@ -85,24 +94,18 @@ class SteerManager(AbstractController):
             self.treat_can_message(order_id, data)
             
 
-    def stop(self):
-        self._print("SteerManager interrupted by user.")
-        self.pulse.ChangeDutyCycle(0)
-        GPIO.output(STEER_EN_PIN, GPIO.HIGH)
-        self._print("Steering disabled")
-        GPIO.cleanup()
-        
-        self.pulse.stop()
-        self.can_system.stop()
-
     def steer(self, position_wanted, enable):
         if not enable:
-            self.pulse.ChangeDutyCycle(0)
-            GPIO.output(STEER_EN_PIN, GPIO.HIGH)
-            print("Steering disabled")
+            # self.pulse.ChangeDutyCycle(0)
+            # #self.pulse.stop()
+            # GPIO.output(STEER_EN_PIN, GPIO.HIGH)
+            
+            print("Steering disabled ! ! nothing can be treated")
             return
+            
     
         else :
+            
             read_position = self.read_steer_position()
             error = position_wanted - read_position
             control_value = KP_STEER * error
@@ -112,6 +115,7 @@ class SteerManager(AbstractController):
                 GPIO.output(STEER_EN_PIN, GPIO.HIGH)
                 self._print("Steering out of bounds, disabling motor")
                 return
+            
             
             GPIO.output(STEER_EN_PIN, GPIO.LOW)
                 
@@ -124,7 +128,7 @@ class SteerManager(AbstractController):
             elif control_value < -STEER_THRESHOLD:
                 GPIO.output(STEER_DIR_PIN, GPIO.LOW) #change direction
                 self.pulse.ChangeDutyCycle(50) #send pulse
-            else:
+            else :
                 self.pulse.ChangeDutyCycle(0)
 
     def treat_can_message(self, message_type, data):
@@ -136,7 +140,10 @@ class SteerManager(AbstractController):
         elif order_id =="stop" :           
                 self.running = False
                 return 
-        elif order_id == "steer_enable":    self.steer_enable = data
+    
+        elif order_id == "steer_enable":    
+            self.steer_enable = data
+            
         elif order_id == "steer_pos_set":  
                 self.last_steer = data
                 actual_steer = self.read_steer_position()
@@ -146,6 +153,7 @@ class SteerManager(AbstractController):
                      self._print(f"Steer position we have: { actual_steer} || Steer position we want-> {self.last_steer}")
                      self.steer(self.last_steer, self.steer_enable)
                      actual_steer = self.read_steer_position()
+                self._print("into pos wanted \n")
         else :
                 self._print(f"Unknown order_id: {order_id}")
                 re.error(f"Unknown order_id: {order_id}")
@@ -153,13 +161,10 @@ class SteerManager(AbstractController):
         
         #time.sleep(0.5)
         
-        
-        # while abs(actual_steer - self.last_steer) > 5:
-            # self._print(f"Steer position we have: { actual_steer} || Steer position we want-> {self.last_steer}")
-            # self.steer(self.last_steer, self.steer_enable)
+        if not self.steer_enable :
+            self._print("manual thing")
+            self.put_steer_to_manual() 
             
-            
-
 
     def read_steer_position(self):
         raw_position = self.mcp.read_adc(0)
@@ -168,6 +173,21 @@ class SteerManager(AbstractController):
     def print_steer_position(self):
         position = self.read_steer_position()
         self._print(f"Steer position: {position}")
+    
+    def stop(self):
+        self._print("SteerManager interrupted by user.")
+        self.pulse.ChangeDutyCycle(0)
+        GPIO.output(STEER_EN_PIN, GPIO.HIGH)
+        self._print("Steering disabled")
+        GPIO.cleanup()
+        
+        self.pulse.stop()
+        self.can_system.stop()
+    
+    def manual_mode (self,duration = 10):
+        self._print("test mode manuel")
+        self.pulse.start(0)
+        self.pulse.ChangeDutyCycle(0)
         
         
 

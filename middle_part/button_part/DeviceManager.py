@@ -8,7 +8,7 @@ class DeviceManager:
     def __init__(self, controllers: list[AbstractController], verbose=False):
         self.verbose = verbose
         self.controllers = controllers
-        self.running = False
+        self.running = True
 
     def run(self):
         self._print("Waiting for 'start' command from CAN...")
@@ -64,8 +64,8 @@ if __name__ == "__main__":
 
     controllers = [
         ButtonController("bouton_park", 22, verbose=args.verbose),
-        #ButtonController("bouton_auto_manu", 23, verbose=args.verbose),
-        #ButtonController("bouton_on_off", 24, verbose=args.verbose),
+        ButtonController("bouton_auto_manu", 23, verbose=args.verbose),
+        ButtonController("bouton_on_off", 24, verbose=args.verbose),
         #ButtonController("bouton_reverse", None, verbose=args.verbose),
     ]
 
