@@ -1,16 +1,20 @@
 import argparse
 import time
 from CAN_system.CANSystem import CANSystem
-import queue
-import threading
 import curses
 
+# Execute : python3 -m sim_auto
+
+# This script simulates a keyboard-controlled CAN interface using the curses library.
+# It allows the user to send control commands such as acceleration, steering, gear selection, 
+# and mode changes to a CAN-based system, emulating a driving interface.
+# The interface displays instructions and feedback in a terminal window.
+# Note: This script has not been tested.
 
 def main(stdscr):
-    # Initialisation curses
-    curses.curs_set(0)  # Cache le curseur
-    stdscr.nodelay(True)  # Pas de blocage sur input
-    stdscr.timeout(100)   # Timeout pour la boucle de lecture
+    curses.curs_set(0)  
+    stdscr.nodelay(True)
+    stdscr.timeout(100)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose mode')
@@ -18,11 +22,9 @@ def main(stdscr):
 
     can = CANSystem(verbose=args.verbose, device_name="KEYBOARD_DRIVER")
     can.start_listening()
-    #can = FakeCANBus()
-    #can.start()
 
     accel = 0
-    steer = 512  # Position neutre
+    steer = 512
 
     stdscr.addstr(0, 0, "[CAN Keyboard Driver Started]", curses.A_BOLD)
 

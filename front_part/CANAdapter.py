@@ -1,5 +1,4 @@
 from CAN_system.CANSystem import CANSystem
-import time
 
 class CANAdapter:
     def __init__(self, channel='can0', interface='socketcan', device_name='BRAKE', verbose=False):

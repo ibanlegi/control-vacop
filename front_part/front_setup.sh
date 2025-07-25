@@ -1,5 +1,6 @@
 # chmod +x front_setup.sh
 
+# cd front_part
 # ./front_setup.sh
 
 #!/bin/bash

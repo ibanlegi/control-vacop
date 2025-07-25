@@ -5,6 +5,8 @@ from .accelerator.controller import AcceleratorController
 from .CANAdapter import CANAdapter
 from AbstractClasses import AbstractController
 
+# Execute : python3 -m front_part.DeviceManager -v
+
 class DeviceManager:
     def __init__(self, controllers: list[AbstractController], verbose = False):
         self.verbose = verbose

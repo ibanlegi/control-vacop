@@ -4,6 +4,8 @@ import RPi.GPIO as GPIO
 from .ButtonController import ButtonController
 from AbstractClasses import AbstractController
 
+# Execute : python3 -m middle_part.button_part.DeviceManager -v
+
 class DeviceManager:
     def __init__(self, controllers: list[AbstractController], verbose=False):
         self.verbose = verbose

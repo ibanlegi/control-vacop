@@ -1,9 +1,12 @@
-from AbstractClasses import AbstractController  # Remplace par le bon chemin
+import argparse
+from AbstractClasses import AbstractController
 import RPi.GPIO as GPIO
 import time
 import Adafruit_MCP3008
 from CAN_system.CANSystem import CANSystem
 import re
+
+# Execute : python3 -m middle_part.steer_part.SteerManager -v
 
 PWM_FREQ_STEER = 1000
 
@@ -65,13 +68,12 @@ class SteerManager(AbstractController):
 
 
     def apply_steer_control(self, position_wanted, force = False):
-        if not self.steer_enable and not force: ## this 
+        if not self.steer_enable and not force: 
             self._print("Steering disabled ! ! nothing can be treated")
             self.put_steer_to_manual()
             return
             
         else :
-            
             read_position = self.read_steer_position()
             error = position_wanted - read_position
             control_value = KP_STEER * error
@@ -105,14 +107,13 @@ class SteerManager(AbstractController):
             self.apply_steer_control(self.last_steer)
             actual_steer = self.read_steer_position()
         self.pulse.ChangeDutyCycle(0)
+        GPIO.output(STEER_EN_PIN, GPIO.HIGH)
         self._print("Reached target position\n")
 
-
-
-## ----------------- Abstract Class functions ----------------- ##
+    ## ----------------- Abstract Class functions ----------------- ##
 
     def wait_for_start(self) -> bool:
-        """Attente d'un signal 'start' via le CAN."""
+        """Waiting 'start' signal with the CAN"""
         self._print("waiting to start")
         while not self.running:
             can_msg = self.can_system.listener.can_input()
@@ -124,7 +125,6 @@ class SteerManager(AbstractController):
         self._print("SteerManager received start signal.")
         return True
     
-
     def initialize(self):
         steer_position = self.read_steer_position()
         self._print(f"Steer position is {steer_position}, moving to neutral position...")
@@ -150,7 +150,6 @@ class SteerManager(AbstractController):
             can_msg = None
             self.treat_can_message(order_id, data)
             
-
     def treat_can_message(self, order_id, data):
         self._print("my message type is ",order_id)
         if order_id == "start" : 
@@ -165,6 +164,8 @@ class SteerManager(AbstractController):
             if not self.steer_enable :
                 self._print("manual thing")
                 self.put_steer_to_manual()
+            else :
+                GPIO.output(STEER_EN_PIN, GPIO.LOW)
             
         elif order_id == "steer_pos_set":  
                 self.last_steer = data
@@ -173,8 +174,6 @@ class SteerManager(AbstractController):
                 self._print(f"Unknown order_id: {order_id}")
                 re.error(f"Unknown order_id: {order_id}")
                 
-            
-    
     def stop(self):
         """Arrêt du système de direction."""
         self.pulse.ChangeDutyCycle(0)
@@ -184,8 +183,6 @@ class SteerManager(AbstractController):
         self.pulse.stop()
         self.can_system.stop()
     
-
-
     def run(self):
         """Entrée principale du programme."""
         try:
@@ -199,7 +196,9 @@ class SteerManager(AbstractController):
         finally:
             self.stop()
 
-
 if __name__ == "__main__":
-    manager = SteerManager(verbose=True)
+    parser = argparse.ArgumentParser(description="DeviceManager to steer vacop system")
+    parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
+    args = parser.parse_args()
+    manager = SteerManager(verbose=args.verbose)
     manager.run()

@@ -2,6 +2,8 @@ import argparse
 import time
 from .MotorController import MotorController
 
+# Execute : python3 -m back_part.DualMotorController -v
+
 class DualMotorController:
     def __init__(self, verbose=False):
         self.verbose = verbose
@@ -54,7 +56,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     myMotorController = DualMotorController(verbose = args.verbose)
-
+    
+    # Scenario
 
     myMotorController.configure()
     myMotorController.set_forward()
