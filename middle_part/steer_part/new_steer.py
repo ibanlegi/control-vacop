@@ -45,65 +45,31 @@ class SteerManager(AbstractController):
     def _print(self, *args, **kwargs):
         if self.verbose:
             print(*args, **kwargs)
-
-    def wait_for_start(self) -> bool:
-        """Attente d'un signal 'start' via le CAN."""
-        self._print("waiting to start")
-        while not self.running:
-            can_msg = self.can_system.listener.can_input()
-            if can_msg is not None:
-                self._print("Received CAN message:", can_msg)
-
-                if isinstance(can_msg, tuple) and len(can_msg) >= 3:
-                    _, order_id, data = can_msg
-                    self.treat_can_message(order_id, data)
-        self._print("SteerManager received start signal.")
-        return True
     
+    def read_steer_position(self):
+        raw_position = self.mcp.read_adc(0)
+        return raw_position
+    
+    def print_steer_position(self):
+        position = self.read_steer_position()
+        self._print(f"Steer position: {position}")
+
+## -----------------Specific functions  ----------------- ##
+
     def put_steer_to_manual (self):
+        self._print("Putting Steer to manual mode...")
         self.pulse.ChangeDutyCycle(0)
         self.pulse.stop()
         self.pulse.start(0)
         GPIO.output(STEER_EN_PIN, GPIO.HIGH)
-        
 
-    def initialize(self):
-        steer_position = self.read_steer_position()
-        self._print(f"Steer position is {steer_position}, moving to neutral position...")
-        while steer_position != NEUTRAL_POSITION:
-            self._print(f"Steer position is {steer_position}, moving to neutral position...")
-            self.steer(NEUTRAL_POSITION, True)
-            steer_position = self.read_steer_position()
-            
-        self.put_steer_to_manual()
-        
-        self.can_system.can_send("OBU", "steer_rdy", None)
-        time.sleep(0.2)
-        self.can_system.can_send("OBU", "steer_rdy", None)
-        self.can_system.can_send("OBU", "steer_rdy", None)
 
-        self._print("SteerManager initialized and ready.")
-
-    def update(self):
-        
-        can_msg = self.can_system.listener.can_input()
-        if can_msg and isinstance(can_msg, tuple) and len(can_msg) == 3 :
-            self._print("Received CAN message:", can_msg)
-            _, order_id, data = can_msg
-            can_msg = None
-            self.treat_can_message(order_id, data)
-            
-
-    def steer(self, position_wanted, enable):
-        if not enable:
-            # self.pulse.ChangeDutyCycle(0)
-            # #self.pulse.stop()
-            # GPIO.output(STEER_EN_PIN, GPIO.HIGH)
-            
-            print("Steering disabled ! ! nothing can be treated")
+    def apply_steer_control(self, position_wanted, force = False):
+        if not self.steer_enable and not force: ## this 
+            self._print("Steering disabled ! ! nothing can be treated")
+            self.put_steer_to_manual()
             return
             
-    
         else :
             
             read_position = self.read_steer_position()
@@ -116,10 +82,8 @@ class SteerManager(AbstractController):
                 self._print("Steering out of bounds, disabling motor")
                 return
             
-            
             GPIO.output(STEER_EN_PIN, GPIO.LOW)
                 
-            
             # define the direction of the wheel spin 
             if control_value > STEER_THRESHOLD: 
                 GPIO.output(STEER_DIR_PIN, GPIO.HIGH) #change direction
@@ -130,10 +94,65 @@ class SteerManager(AbstractController):
                 self.pulse.ChangeDutyCycle(50) #send pulse
             else :
                 self.pulse.ChangeDutyCycle(0)
+                self._print("Steering position is within threshold, no action taken")
 
-    def treat_can_message(self, message_type, data):
-        order_id = message_type
-        print("my message type is",order_id)
+
+    def move_to_target_position(self):
+        """Move the steering actuator to the last set position."""
+        actual_steer = self.read_steer_position()
+        while abs(actual_steer - self.last_steer) > 5:
+            self._print(f"Steer position we have: {actual_steer} || Steer position we want-> {self.last_steer}")
+            self.apply_steer_control(self.last_steer)
+            actual_steer = self.read_steer_position()
+        self.pulse.ChangeDutyCycle(0)
+        self._print("Reached target position\n")
+
+
+
+## ----------------- Abstract Class functions ----------------- ##
+
+    def wait_for_start(self) -> bool:
+        """Attente d'un signal 'start' via le CAN."""
+        self._print("waiting to start")
+        while not self.running:
+            can_msg = self.can_system.listener.can_input()
+            if can_msg is not None:
+                self._print("Received CAN message:", can_msg)
+                if isinstance(can_msg, tuple) and len(can_msg) >= 3:
+                    _, order_id, data = can_msg
+                    self.treat_can_message(order_id, data)
+        self._print("SteerManager received start signal.")
+        return True
+    
+
+    def initialize(self):
+        steer_position = self.read_steer_position()
+        self._print(f"Steer position is {steer_position}, moving to neutral position...")
+        while steer_position != NEUTRAL_POSITION:
+            self._print(f"Steer position is {steer_position}, moving to neutral position...")
+            self.apply_steer_control(NEUTRAL_POSITION, force = True)
+            steer_position = self.read_steer_position()
+            
+        self.put_steer_to_manual()
+        
+        self.can_system.can_send("OBU", "steer_rdy", None)
+        time.sleep(0.2)
+        self.can_system.can_send("OBU", "steer_rdy", None)
+        self.can_system.can_send("OBU", "steer_rdy", None)
+
+        self._print("SteerManager initialized and ready.")
+
+    def update(self):
+        can_msg = self.can_system.listener.can_input()
+        if can_msg and isinstance(can_msg, tuple) and len(can_msg) == 3 :
+            self._print("Received CAN message:", can_msg)
+            _, order_id, data = can_msg
+            can_msg = None
+            self.treat_can_message(order_id, data)
+            
+
+    def treat_can_message(self, order_id, data):
+        self._print("my message type is ",order_id)
         if order_id == "start" : 
                 self.running = True
 
@@ -143,55 +162,31 @@ class SteerManager(AbstractController):
     
         elif order_id == "steer_enable":    
             self.steer_enable = data
+            if not self.steer_enable :
+                self._print("manual thing")
+                self.put_steer_to_manual()
             
         elif order_id == "steer_pos_set":  
                 self.last_steer = data
-                actual_steer = self.read_steer_position()
-                self._print(f"Steer position we have: { actual_steer} ")
-
-                while abs(actual_steer - self.last_steer) > 5 :
-                     self._print(f"Steer position we have: { actual_steer} || Steer position we want-> {self.last_steer}")
-                     self.steer(self.last_steer, self.steer_enable)
-                     actual_steer = self.read_steer_position()
-                self._print("into pos wanted \n")
+                self.move_to_target_position()
         else :
                 self._print(f"Unknown order_id: {order_id}")
                 re.error(f"Unknown order_id: {order_id}")
                 
-        
-        #time.sleep(0.5)
-        
-        if not self.steer_enable :
-            self._print("manual thing")
-            self.put_steer_to_manual() 
             
-
-    def read_steer_position(self):
-        raw_position = self.mcp.read_adc(0)
-        return raw_position
-    
-    def print_steer_position(self):
-        position = self.read_steer_position()
-        self._print(f"Steer position: {position}")
     
     def stop(self):
-        self._print("SteerManager interrupted by user.")
+        """Arrêt du système de direction."""
         self.pulse.ChangeDutyCycle(0)
         GPIO.output(STEER_EN_PIN, GPIO.HIGH)
         self._print("Steering disabled")
         GPIO.cleanup()
-        
         self.pulse.stop()
         self.can_system.stop()
     
-    def manual_mode (self,duration = 10):
-        self._print("test mode manuel")
-        self.pulse.start(0)
-        self.pulse.ChangeDutyCycle(0)
-        
-        
 
-    def main(self):
+
+    def run(self):
         """Entrée principale du programme."""
         try:
             self.pulse.start(0)
@@ -199,9 +194,6 @@ class SteerManager(AbstractController):
                 self.initialize()
                 while self.running:
                     self.update()
-                    # self.print_steer_position()
-                    # time.sleep(3)
-                    # self.can_system.start_listening()
         except KeyboardInterrupt:
             self._print("Interrupted by user.")
         finally:
@@ -210,4 +202,4 @@ class SteerManager(AbstractController):
 
 if __name__ == "__main__":
     manager = SteerManager(verbose=True)
-    manager.main()
+    manager.run()
