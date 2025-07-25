@@ -1,37 +1,9 @@
 import argparse
 import time
-#from CAN_system.CANSystem import CANSystem
+from CAN_system.CANSystem import CANSystem
 import queue
 import threading
 import curses
-
-class FakeCANBus:
-    def __init__(self):
-        self.msg_queue = queue.Queue()
-        self.listeners = []
-
-    def can_send(self, sender, msg_type, data):
-        message = (sender, msg_type, data)
-        print(f"[Bus] {sender} -> {msg_type}: {data}")
-        self.msg_queue.put(message)
-
-    def add_listener(self, callback):
-        self.listeners.append(callback)
-
-    def start(self):
-        def run():
-            while True:
-                try:
-                    msg = self.msg_queue.get(timeout=1)
-                except queue.Empty:
-                    continue
-                for callback in self.listeners:
-                    callback(*msg)
-        threading.Thread(target=run, daemon=True).start()
-    
-    def stop(self):
-        print("stop")
-
 
 
 def main(stdscr):
@@ -44,10 +16,10 @@ def main(stdscr):
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose mode')
     args, _ = parser.parse_known_args()
 
-    #can = CANSystem(verbose=args.verbose, device_name="KEYBOARD_DRIVER")
-    #can.start_listening()
-    can = FakeCANBus()
-    can.start()
+    can = CANSystem(verbose=args.verbose, device_name="KEYBOARD_DRIVER")
+    can.start_listening()
+    #can = FakeCANBus()
+    #can.start()
 
     accel = 0
     steer = 512  # Position neutre

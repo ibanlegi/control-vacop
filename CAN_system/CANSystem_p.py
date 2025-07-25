@@ -1,4 +1,4 @@
-# File: CANSystem.py
+# File: CANSystem.py 
 # This file is part of the OBU project.
 # Created by Rémi Myard
 # Modified by Iban LEGINYORA and Tinhinane AIT-MESSAOUD
@@ -14,6 +14,7 @@ import can
 import re
 import threading
 import queue
+import itertools
 
 
 class CANManager:
@@ -63,19 +64,17 @@ class CANManager:
         self.bus.send(can_message)
 
 
-
 class CANReceiver(can.Listener):
     def __init__(self, manager: CANManager):
         super().__init__()
         self.manager = manager
         self.last_data = {}
         self.msg_queue = queue.PriorityQueue()
+        self.counter = itertools.count()  # Ajout du compteur pour gérer les priorités égales
     
     def get_priority(self, msg):
         arbitration_id = msg.arbitration_id
-        #device_hex = hex(arbitration_id >> 8)[2:].zfill(2) #not use
         order_hex = hex(arbitration_id & 0xFF)[2:].zfill(2)
-
         order = self.manager.order_id_reverse_map.get(order_hex, order_hex)
 
         # List of priority orders (lower values = higher priority)
@@ -89,14 +88,13 @@ class CANReceiver(can.Listener):
         else:
             return 2  # Default priority
 
-
     def on_message_received(self, msg):
         priority = self.get_priority(msg)
-        self.msg_queue.put((priority, msg))
+        self.msg_queue.put((priority, next(self.counter), msg))  # Utilisation du compteur
 
     def can_input(self):
         try:
-            priority, msg = self.msg_queue.get_nowait()
+            priority, _, msg = self.msg_queue.get_nowait()  # On ignore le compteur ici
         except queue.Empty:
             return None
 
@@ -111,15 +109,15 @@ class CANReceiver(can.Listener):
         print("arbitration_id :", arbitration_id)
         print("device_hex :", device_hex, "-> device :", device)
         print("order_hex : ", order_hex, "-> order", order)
-        print("data")
+        print("data :", data)
+
         if device == self.manager.device_name:
             return device, order, data
         return None
 
 
-
 class CANSystem:
-    def __init__(self,device_name, channel='can0', interface='socketcan', verbose=False):
+    def __init__(self, device_name, channel='can0', interface='socketcan', verbose=False):
         self.device_name = device_name
         self.verbose = verbose
         self.bus = can.interface.Bus(channel=channel, interface=interface, receive_own_messages=False)
@@ -156,7 +154,6 @@ class CANSystem:
         if hasattr(self, "listen_thread"):
             self.listen_thread.join()
         self.bus.shutdown()
-
 
     def can_send(self, id_, sub_id, data=None):
         self.can_manager.can_send(id_, sub_id, data)

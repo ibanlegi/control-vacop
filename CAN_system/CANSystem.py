@@ -87,11 +87,6 @@ class CANReceiver(can.Listener):
 
         device = self.manager.device_id_reverse_map.get(device_hex, device_hex)
         order = self.manager.order_id_reverse_map.get(order_hex, order_hex)
-
-        print("arbitration_id :", arbitration_id)
-        print("device_hex :", device_hex, "-> device :", device)
-        print("order_hex : ", order_hex, "-> order", order)
-        print("data")
         if device == self.manager.device_name:
             return device, order, data
         return None

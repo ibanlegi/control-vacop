@@ -8,7 +8,7 @@
 # Execute : python3 -m back_part.OBU -v
 
 
-from CAN_system.CANSystem import CANSystem
+from CAN_system.CANSystem_p import CANSystem
 from .DualMotorController import DualMotorController
 import argparse
 import time
@@ -44,7 +44,7 @@ class OBU:
             case "bouton_park":
                 self._handle_bouton_park()
             case "bouton_auto_manu":
-                self._handle_bouton_auto_manu()
+                self._handle_bouton_auto_manu(data)
             case "bouton_on_off":
                 self._handle_bouton_on_off(data)
             case "bouton_reverse":
@@ -160,7 +160,6 @@ class OBU:
                 self._enter_reverse_state()
             case "ERROR":
                 self._change_mode("ERROR")
-        print("on_change : END")
 
     # = State Handlers =
 
