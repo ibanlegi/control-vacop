@@ -4,7 +4,7 @@
 
 1. [Document overview](#document-overview)  
 2. [Overall project structure](#overall-project-structure)
-   -[Based on previous project](#based-on-previous-project)  
+   - [Based on previous project](#based-on-previous-project)  
 3. [CAN_system part](#can_system-part)  
 4. [back_part section](#back_part-section)  
    - [Starting the back section](#starting-the-back-section)  
