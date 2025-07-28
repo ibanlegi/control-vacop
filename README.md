@@ -3,7 +3,8 @@
 ## Table of Contents
 
 1. [Document overview](#document-overview)  
-2. [Overall project structure](#overall-project-structure)  
+2. [Overall project structure](#overall-project-structure)
+   -[Based on previous project](#based-on-previous-project)  
 3. [CAN_system part](#can_system-part)  
 4. [back_part section](#back_part-section)  
    - [Starting the back section](#starting-the-back-section)  
@@ -29,6 +30,20 @@ It is based on :
 - [python-can](https://github.com/hardbyte/python-can) : handling the low-level CAN layer
 
 - [SoloPy](https://github.com/Solo-FL/SoloPy) : CANopen communication with Solo Mega motors
+
+### Based on previous project
+
+This project builds on a previous VACOP system prototype :
+[Code-Vacop GitHub Repository](https://github.com/Rmyard/Code-Vacop)
+
+The original project introduced the core concept of communication between multiple Raspberry Pi boards via the CAN bus. It also implemented motor control logic, steering, and dashboard interaction.
+
+The current version refactors and extends that work with :
+- A clearer separation of concerns between hardware roles (front/middle/back).
+- A robust and modular CAN communication layer using `CANSystem`.
+- Improved configuration and deployment scripts for reproducible setups.
+- Enhanced abstraction of devices via the `AbstractController` interface.
+
 
 ## Overall project structure
 
