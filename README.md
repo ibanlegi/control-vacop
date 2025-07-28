@@ -15,7 +15,7 @@
 7. [Adding a component to the project](#adding-a-component-to-the-project)  
 8. [Raspberry Pi configuration for CAN](#raspberry-pi-configuration-for-can)  
 9. [Possible improvements](#possible-improvements)  
-10. [Annexes](#annexes)  
+10. [Appendices](#appendices)  
     - [Class diagram – VACOP system](#class-diagram--vacop-system)  
     - [State Machine Diagram](#state-machine-diagram)  
 11. [Licence](#licence)  
@@ -237,7 +237,7 @@ Some potential enhancements to the VACOP system include :
 - Implementing automatic startup scripts to launch the Raspberry Pis and their respective processes seamlessly on boot.
 - Developing dedicated control functionality for the brake pedal to enhance overall vehicle handling and safety.
 
-## Annexes
+## Appendices
 
 ### Class diagram – VACOP system
 The following appendix presents the class diagram of the VACOP project, providing a structural overview of the main components, their relationships, and the data flows between modules.
