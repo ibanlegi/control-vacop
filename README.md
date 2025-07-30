@@ -299,5 +299,6 @@ If you have questions or feedback… please don’t :).
 
 But if you're really facing an issue, feel free to reach out :
 
-- <a href="https://github.com/tinyaitmess"><img src="https://github.com/tinyaitmess.png" width="25" height="25" style="border-radius: 50%; vertical-align: middle;"/></a> AIT-MESSAOUD Tinhinane
-- <a href="https://github.com/ibanlegi"><img src="https://github.com/ibanlegi.png" width="25" height="25" style="border-radius: 50%; vertical-align: middle;"/></a> LEGINYORA Iban
+- <a href="https://github.com/tinyaitmess"><img src="https://github.com/tinyaitmess.png" width="25" height="25" style="border-radius: 50%; vertical-align: middle;"/></a> AIT-MESSAOUD Tinhinane : [tinhinane.ait-messaoud@utoulouse.fr](mailto:tinhinane.ait-messaoud@utoulouse.fr)
+- <a href="https://github.com/ibanlegi"><img src="https://github.com/ibanlegi.png" width="25" height="25" style="border-radius: 50%; vertical-align: middle;"/></a> LEGINYORA Iban : [iban.leginyora@utoulouse.fr](mailto:iban.leginyora@utoulouse.fr)
+
